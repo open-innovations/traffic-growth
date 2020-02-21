@@ -72,7 +72,7 @@ foreach $sensor (sort(keys(%sensors))){
 		$sensorjson{$s} = $index;
 	}
 	if($sensorlane{$s}){ $sensorlane{$s} .= ","; }
-	$sensorlane{$s} .= "{\"id\":$lane,\"start\":\"$datetimes[0]\",\"period\":$sensors{$sensor}{'period'},\"b\":".(-s $file)."}";
+	$sensorlane{$s} .= "\"$lane\":{\"start\":\"$datetimes[0]\",\"period\":$sensors{$sensor}{'period'},\"b\":".(-s $file)."}";
 
 }
 
@@ -81,7 +81,7 @@ print FILE "{\n";
 $i = 0;
 foreach $s (sort(keys(%sensorjson))){
 	if($i > 0){ print FILE ",\n"; }
-	print FILE "$sensorjson{$s},\"lanes\":[$sensorlane{$s}]}";
+	print FILE "$sensorjson{$s},\"lanes\":{$sensorlane{$s}}}";
 	$i++;
 }
 print FILE "\n}";
