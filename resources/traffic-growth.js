@@ -312,17 +312,10 @@ console.log(data.hourly)
 				S('.balloon').remove();
 				var key,table,i,c;
 				// Get the key for this bin
+				i = parseInt(e.bin);
 				key = this.bins[e.bin].key;
-				table = "";
-				if(_obj.selected.length > 1){
-					for(i = _obj.selected.length-1; i >= 0; i--){
-						c = _obj.airports[_obj.selected[i]].colour;
-						if(this.bins[e.bin].values[i] > 0) table += '<tr'+(colours[c] ? ' class="'+colours[c]+'"':'')+'><td>'+(_obj.airports[_obj.selected[i]].IATA || _obj.airports[_obj.selected[i]].ICAO)+'</td><td>'+Math.round(this.bins[e.bin].values[i]/1000).toLocaleString()+' tonnes</td></tr>';
-					}
-				}
-				table += '<tr><td>Count</td><td>'+(this.bins[e.bin].value).toLocaleString()+'</td></tr>';
 				// Add a new information balloon - if the bin size is >1 we show the bin range in the label
-				S(S(e.event.currentTarget).find('.bar')[0]).append('<div class="balloon">' + key + (table ? '<table>'+table+'</table>':'') + '</div>');
+				S(S(e.event.currentTarget).find('.bar')[0]).append('<div class="balloon">' + this.bins[i].value+' count'+(this.bins[i].value == 1 ? '':'s')+' '+this.bins[i].key+'-'+(i+1 < 24 ? this.bins[(i+1)].key : "00:00")+ '</div>');
 			});
 			// Set the data, bins and draw
 			chart.setData(data.hourly).setBins({'mintick':5}).draw();
