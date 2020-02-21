@@ -1,0 +1,1 @@
+The data in this directory are from https://datamillnorth.org/dataset/leeds-annual-cycle-growth- and are released under the Open Government Licence (OGL 3)
