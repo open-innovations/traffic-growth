@@ -538,7 +538,7 @@ S(document).ready(function(){
 		if(typeof v !== "number") return v;
 		if(v > 1e7) return Math.round(v/1e6)+"M";
 		if(v > 1e6) return (v/1e6).toFixed(1)+"M";
-		if(v > 1e4) return v.toLocaleString();
+		if(v >= 1e3) return v.toLocaleString();
 		return v;
 	}
 	// Sort the data
