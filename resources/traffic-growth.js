@@ -224,7 +224,6 @@ S(document).ready(function(){
 			if(el.find('.charts').length==0) el.find('.output').append('<div class="charts">'+html+'</div>');
 			else el.find('.charts').html(html);
 
-
 			var min = "3000-12-01";
 			var max = "0001-01-01";
 
@@ -242,45 +241,44 @@ S(document).ready(function(){
 
 			var ds = new Date(min);
 			var de = new Date(max);
-console.log(min,max,ds,de,this.selected,this.counters[idx[0]].lanes[idx[1]])
 
 			// Create data arrays
 			var data = {'hourly':[],'dow':[],'monthly':[],'yearly':[]};
+			var dow = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+			var month = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 
-			for(h = 0; h < 24; h++) data.hourly.push([(h<10 ? "0":"")+h+":00",[]]);
+			for(h = 0; h < 24; h++) data.hourly.push([(h<10 ? "0":"")+h+":00",new Array(this.selected.length)]);
+			for(d = 0; d < 7; d++) data.dow.push([dow[d],new Array(this.selected.length)]);
+			for(m = 0; m < 12; m++) data.monthly.push([month[m],new Array(this.selected.length)]);
+			for(y = ds.getUTCFullYear(); y <= de.getUTCFullYear(); y++) data.yearly.push([y+"",new Array(this.selected.length)]);
+			
 
 			for(c = 0; c < this.selected.length; c++){
-				hours = {};
-				for(h = 0; h < 24; h++) hours[h] = 0;
 				idx = [this.selected[c].sensor,this.selected[c].lane];
+				for(h = 0; h < 24; h++) data.hourly[h][1][c] = 0;
+				for(d = 0; d < 7; d++) data.dow[d][1][c] = 0;
+				for(m = 0; m < 12; m++) data.monthly[m][1][c] = 0;
+				for(y = 0; y < data.yearly.length; y++) data.yearly[y][1][c] = 0;
 				for(var i = 0; i < this.counters[idx[0]].lanes[idx[1]].data.rows.length; i++){
+					d = new Date(this.counters[idx[0]].lanes[idx[1]].data.rows[i][0]);
+					t = 0;
 					for(h = 0; h < 24; h++){
-						hours[h] += parseInt(this.counters[idx[0]].lanes[idx[1]].data.rows[i][h+1])||0;
+						n = this.counters[idx[0]].lanes[idx[1]].data.rows[i][h+1];
+						if(n){
+							n = parseInt(n);
+							if(!isNaN(n)){
+								data.hourly[h][1][c] += n;
+								t += n;
+							}
+						}
 					}
+					data.dow[(d.getDay()+6) % 7][1][c] += t;	// Shift day-of-week from Sunday start to Monday start
+					data.monthly[d.getMonth()][1][c] += t;
+					data.yearly[(d.getUTCFullYear()-ds.getUTCFullYear())+""][1][c] += t;
 				}
-				for(h = 0; h < 24; h++) data.hourly[h][1].push(hours[h])
 			}
-console.log(data.hourly)
-/*
-			for(d = ds; d <= de;){
-				dt = d.toISOString().substr(0,10);
-				
-				
-				data.emissions.push([dt,[]]);
-				data.flights.push([dt,[]]);
-				for(c = 0; c < this.selected.length; c++){
-					idx = this.selected[c];
-					m = -1;
-					for(var i = 0; i < this.airports[idx].data.dates.length; i++){
-						if(this.airports[idx].data.dates[i]==dt) m = i;
-					}
-					data.emissions[data.emissions.length-1][1].push(m >= 0 ? this.airports[idx].data.emissions[m] : 0);
-					data.flights[data.flights.length-1][1].push(m >= 0 ? this.airports[idx].data.flights[m] : 0);
-				}
-				// Increment day
-				d.setDate(d.getDate()+1);
-			}*/
+			console.log(data)
 
 			var _obj = this;
 			var formatBar = function(key,value,series){
@@ -288,26 +286,22 @@ console.log(data.hourly)
 				d = new Date(key);
 				d = d.getUTCDay();
 				cls = "";
-				for(var i = 0; i < data.hourly.length; i++){
-					if(data.hourly[i][0]==key){
-						if(i > data.hourly.length/2) cls = " bar-right";
-					}
-				}
 				if(typeof series==="number"){
 					idx = _obj.selected[series];
 					c = _obj.counters[idx.sensor].lanes[idx.lane].colour;
-					return (d == 0 || d == 6 ? colours[c]+' weekend' : colours[c])+cls;
+					return (colours[c])+cls;
 				}else return cls;
-
 			}
 
+			var chart = {};
+
 			// Build the barchart object attached to <div id="barchart">
-			var chart = new S.barchart('#barchart-hourly',{
+			chart.hourly = new S.barchart('#barchart-hourly',{
 				'formatX': function(v){ return (parseInt(v.substr(0,2)) % 4 == 0 ? v : ""); },
 				'formatY': function(v){ return formatNumber(v) },
 				'formatBar': formatBar
 			});
-			chart.on('barover',function(e){
+			chart.hourly.on('barover',function(e){
 				// Remove any existing information balloon
 				S('.balloon').remove();
 				var key,table,i,c;
@@ -315,39 +309,68 @@ console.log(data.hourly)
 				i = parseInt(e.bin);
 				key = this.bins[e.bin].key;
 				// Add a new information balloon - if the bin size is >1 we show the bin range in the label
-				S(S(e.event.currentTarget).find('.bar')[0]).append('<div class="balloon">' + this.bins[i].value+' count'+(this.bins[i].value == 1 ? '':'s')+' '+this.bins[i].key+'-'+(i+1 < 24 ? this.bins[(i+1)].key : "00:00")+ '</div>');
+				S(S(e.event.currentTarget).find('.bar')[0]).append('<div class="balloon">' + this.bins[i].value.toLocaleString()+' count'+(this.bins[i].value == 1 ? '':'s')+' '+this.bins[i].key+'-'+(i+1 < 24 ? this.bins[(i+1)].key : "00:00")+ '</div>');
 			});
 			// Set the data, bins and draw
-			chart.setData(data.hourly).setBins({'mintick':5}).draw();
+			chart.hourly.setData(data.hourly).setBins({'mintick':5}).draw();
 			
-			return;
-			/*
 			// Build the barchart object attached to <div id="barchart">
-			var chart2 = new S.barchart('#barchart-flights',{
-				'formatX': function(v){ return (v.lastIndexOf('-01')==7 ? v.substr(0,7) : ""); },
+			chart.dow = new S.barchart('#barchart-dow',{
+				'formatX': function(v){ return v; },
 				'formatY': function(v){ return formatNumber(v) },
 				'formatBar': formatBar
 			});
-			chart2.on('barover',function(e){
+			chart.dow.on('barover',function(e){
 				// Remove any existing information balloon
 				S('.balloon').remove();
+				var key,table,i,c;
 				// Get the key for this bin
-				var key,table,i;
+				i = parseInt(e.bin);
 				key = this.bins[e.bin].key;
-				table = "";
-				if(_obj.selected.length > 1){
-					for(i = _obj.selected.length-1; i >= 0; i--){
-						c = _obj.airports[_obj.selected[i]].colour;
-						if(this.bins[e.bin].values[i] > 0) table += '<tr'+(colours[c] ? ' class="'+colours[c]+'"':'')+'><td>'+(_obj.airports[_obj.selected[i]].IATA || _obj.airports[_obj.selected[i]].ICAO)+'</td><td>'+this.bins[e.bin].values[i].toLocaleString()+'</td></tr>';
-					}
-				}
-				table += '<tr><td>Total</td><td>'+(this.bins[e.bin].value).toLocaleString()+'</td></tr>';
 				// Add a new information balloon - if the bin size is >1 we show the bin range in the label
-				S(S(e.event.currentTarget).find('.bar')[0]).append('<div class="balloon">' + key + (table ? '<table>'+table+'</table>':'') + '</div>');
+				S(S(e.event.currentTarget).find('.bar')[0]).append('<div class="balloon">' + this.bins[i].value.toLocaleString()+' count'+(this.bins[i].value == 1 ? '':'s')+' on '+this.bins[i].key+ '</div>');
 			});
 			// Set the data, bins and draw
-			chart2.setData(data.flights).setBins({'mintick':5}).draw();
-*/
+			chart.dow.setData(data.dow).setBins({}).draw();
+		
+			// Build the barchart object attached to <div id="barchart">
+			chart.monthly = new S.barchart('#barchart-monthly',{
+				'formatX': function(v){ return v; },
+				'formatY': function(v){ return formatNumber(v) },
+				'formatBar': formatBar
+			});
+			chart.monthly.on('barover',function(e){
+				// Remove any existing information balloon
+				S('.balloon').remove();
+				var key,table,i,c;
+				// Get the key for this bin
+				i = parseInt(e.bin);
+				key = this.bins[e.bin].key;
+				// Add a new information balloon - if the bin size is >1 we show the bin range in the label
+				S(S(e.event.currentTarget).find('.bar')[0]).append('<div class="balloon">' + this.bins[i].value.toLocaleString()+' count'+(this.bins[i].value == 1 ? '':'s')+' in '+this.bins[i].key+ '</div>');
+			});
+			// Set the data, bins and draw
+			chart.monthly.setData(data.monthly).setBins({}).draw();
+
+			// Build the barchart object attached to <div id="barchart">
+			chart.yearly = new S.barchart('#barchart-yearly',{
+				'formatX': function(v){ return v; },
+				'formatY': function(v){ return formatNumber(v) },
+				'formatBar': formatBar
+			});
+			chart.yearly.on('barover',function(e){
+				// Remove any existing information balloon
+				S('.balloon').remove();
+				var key,table,i,c;
+				// Get the key for this bin
+				i = parseInt(e.bin);
+				key = this.bins[e.bin].key;
+				// Add a new information balloon - if the bin size is >1 we show the bin range in the label
+				S(S(e.event.currentTarget).find('.bar')[0]).append('<div class="balloon">' + this.bins[i].value.toLocaleString()+' count'+(this.bins[i].value == 1 ? '':'s')+' in '+this.bins[i].key+ '</div>');
+			});
+			// Set the data, bins and draw
+			chart.yearly.setData(data.yearly).setBins({}).draw();
+
 			return this;
 		}
 
