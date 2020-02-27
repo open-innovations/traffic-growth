@@ -23,7 +23,7 @@ S(document).ready(function(){
 			};
 		}
 
-		// Get the airport primary index
+		// Get the sensor index
 		S().ajax('data/index.json',{
 			'dataType': 'json',
 			'this': this,
@@ -66,47 +66,9 @@ S(document).ready(function(){
 					console.error('No counter '+bits[0]);
 				}
 			}
-		}
-	/*
-		this.searchAirport = function(){
-
-			str = el.find('input')[0].value.toUpperCase();
-
-			// Rank the airports
-			tmp = [];
-			for(a = 0 ; a < this.airports.length; a++){
-				if(!this.airports[a].selected){
-					datum = {'rank':0,'key':a};
-					if(this.airports[a].ICAO && this.airports[a].ICAO.toUpperCase().indexOf(str)==0) datum.rank += 4;
-					if(this.airports[a].IATA && this.airports[a].IATA.toUpperCase().indexOf(str)==0) datum.rank += 4;
-					if(this.airports[a].name.toUpperCase().indexOf(str)==0) datum.rank += 3;
-					if(this.airports[a].name.toUpperCase().indexOf(str) > 0) datum.rank += 1;
-					tmp.push(datum);
-				}
-			}
-			tmp = sortBy(tmp,'rank');
-			// Add results to DOM
-			if(el.find('.searchresults').length==0) el.find('form').append('<div class="searchresults"></div>');
-			html = "";
-			if(tmp.length > 0){
-				S('.searchresults li').off('click');
-				html = "<ol>";
-				var n = Math.min(tmp.length,10);
-				for(var i = 0; i < n; i++){
-					if(tmp[i].rank > 0) html += '<li data-id="'+tmp[i].key+'" '+(i==0 ? ' class="selected"':'')+'><div class="name">'+this.airports[tmp[i].key].name+(' ('+this.airports[tmp[i].key].IATA+')' || '')+"</div></li>";
-				}
-				html += "</ol>";
-			}
-
-			S('.searchresults').html(html);
-			var li = S('.searchresults li');
-			for(var i = 0 ; i < li.e.length ; i++) S(li.e[i]).on('click',{me:this},function(e){
-				el.find('input')[0].value = "";
-				e.data.me.selectCounter(e.currentTarget.getAttribute('data-id'),function(){ this.display(); this.updateHistory(); });
-			});
-
+			this.buildMap();
 			return this;
-		}*/
+		}
 		
 		this.getUnusedColour = function(){
 			var c,i,found,code,a,l;
@@ -121,13 +83,6 @@ S(document).ready(function(){
 			}
 			return 0;
 		}
-		/*
-		this.IATAtoIndex = function(code){
-			for(var a = 0; a < this.airports.length; a++){
-				if(this.airports[a].IATA == code) return a;
-			}
-			return -1;
-		}*/
 		
 		this.selectCounter = function(idx,callback){
 
@@ -176,6 +131,34 @@ S(document).ready(function(){
 			this.airportlist = str;
 		}
 		
+		this.addCounter = function(sensor,lane){
+			console.log('addCounter',sensor,lane);
+			this.selectCounter([sensor,lane],function(idx){
+				this.display();
+			});
+			return this;
+		}
+		
+		this.removeCounter = function(sensor,lane){
+			var idx = [sensor,lane];
+			el.find('.select-'+idx[0]+'-'+idx[1]).remove();
+			console.log('Remove',idx);
+			if(this.counters[idx[0]]){
+				delete this.counters[idx[0]].lanes[idx[1]].colour;
+				var match = -1;
+				for(c = 0; c < this.selected.length; c++){
+					if(this.selected[c].sensor==idx[0] && this.selected[c].lane==idx[1]) match = c;
+				}
+		
+				if(match >= 0) this.selected.splice(match,1);
+				this.counters[idx[0]].lanes[idx[1]].selected = false;
+				this.display();
+			}else{
+				console.warning('No index '+idx)
+			}
+			this.updateHistory();
+			return this;
+		}
 
 		this.display = function(){
 
@@ -199,23 +182,7 @@ S(document).ready(function(){
 			el.find('.tags .tag .close').on('click',{me:this},function(e){
 				e.preventDefault();
 				e.stopPropagation();
-				idx = [e.currentTarget.getAttribute('data-sensor'),e.currentTarget.getAttribute('data-lane')];
-				el.find('.select-'+idx[0]+'-'+idx[1]).remove();
-				console.log('Remove',idx);
-				if(e.data.me.counters[idx[0]]){
-					delete e.data.me.counters[idx[0]].lanes[idx[1]].colour;
-					var match = -1;
-					for(c = 0; c < e.data.me.selected.length; c++){
-						if(e.data.me.selected[c].sensor==idx[0] && e.data.me.selected[c].lane==idx[1]) match = c;
-					}
-			
-					if(match >= 0) e.data.me.selected.splice(match,1);
-					e.data.me.counters[idx[0]].lanes[idx[1]].selected = false;
-					e.data.me.display();
-				}else{
-					console.warning('No index '+idx)
-				}
-				e.data.me.updateHistory();
+				e.data.me.removeCounter(e.currentTarget.getAttribute('data-sensor'),e.currentTarget.getAttribute('data-lane'));
 			});
 
 			if(this.selected.length==0) return this;
@@ -278,7 +245,6 @@ S(document).ready(function(){
 					data.yearly[(d.getUTCFullYear()-ds.getUTCFullYear())+""][1][c] += t;
 				}
 			}
-			console.log(data)
 
 			var _obj = this;
 			var formatBar = function(key,value,series){
@@ -371,6 +337,73 @@ S(document).ready(function(){
 			// Set the data, bins and draw
 			chart.yearly.setData(data.yearly).setBins({}).draw();
 
+			return this;
+		}
+		
+		this.buildMap = function(){
+			if(!this.map){
+				lat = 53.79659;
+				lon = -1.53385;
+				d = 0.10;
+			
+				this.baseMaps = {
+					'Default':  L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
+						attribution: 'Tiles: &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
+						subdomains: 'abcd',
+						maxZoom: 19
+					})
+				};
+			
+				this.map = L.map('map',{'layers':[this.baseMaps.Default],'scrollWheelZoom':true,'zoomControl':true,'editable': true}).fitBounds([
+					[lat-d, lon-d],
+					[lat+d, lon+d]
+				]);
+				
+				function makeMarker(colour){
+					return L.divIcon({
+						'className': '',
+						'html':	'<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" width="7.0556mm" height="11.571mm" viewBox="0 0 25 41.001" id="svg2" version="1.1"><g id="layer1" transform="translate(1195.4,216.71)"><path style="fill:%COLOUR%;fill-opacity:1;fill-rule:evenodd;stroke:#ffffff;stroke-width:0.1;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" d="M 12.5 0.5 A 12 12 0 0 0 0.5 12.5 A 12 12 0 0 0 1.8047 17.939 L 1.8008 17.939 L 12.5 40.998 L 23.199 17.939 L 23.182 17.939 A 12 12 0 0 0 24.5 12.5 A 12 12 0 0 0 12.5 0.5 z " transform="matrix(1,0,0,1,-1195.4,-216.71)" id="path4147" /><ellipse style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.428;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" id="path4173" cx="-1182.9" cy="-204.47" rx="5.3848" ry="5.0002" /></g></svg>'.replace(/%COLOUR%/,colour||"#000000"),
+						iconSize:	 [25, 41], // size of the icon
+						shadowSize:	 [41, 41], // size of the shadow
+						iconAnchor:	 [12.5, 41], // point of the icon which will correspond to marker's location
+						shadowAnchor: [12.5, 41],	// the same for the shadow
+						popupAnchor:	[0, -41] // point from which the popup should open relative to the iconAnchor
+					});
+				}
+				//S('body').append('<div class="seasonal-accent" id="_temp"></div>');
+				//var bg = window.getComputedStyle(S('#_temp')[0]).backgroundColor;
+				//S('#_temp').remove();
+				var customicon = makeMarker();
+				var markers = [];
+				for(var c in this.counters){
+					if(this.counters[c].c){
+						markers.push(L.marker(this.counters[c].c,{icon: customicon,id:c,counter:this.counters[c]}).bindPopup('Test').addTo(this.map));
+						//changing the content on mouseover
+						markers[markers.length-1].on('mouseover', function(m){
+							str = '<h3>'+this.options.counter.name+'</h3><p>'+this.options.counter.desc+'</p>';
+							for(var l in this.options.counter.lanes){
+								str += '<a href="#" class="button seasonal-accent" data-id="'+l+'">&plus; Lane '+l+'</a>';
+							}
+							this._popup.setContent('<div id="popup-'+this.options.id+'">'+str+'</div>');
+						});
+					}
+					console.log(c,this.counters[c]);
+				}
+				var _obj = this;
+				// Add events to buttons 
+				this.map.on('popupopen', function(e) {
+					var marker = e.popup._source;
+					console.log('popupopen',marker.options.id,marker.options);
+					S('#popup-'+marker.options.id+' a.button').on('click',{options:marker.options},function(e){
+						e.preventDefault();
+						e.stopPropagation();
+						_obj.addCounter(e.data.options.id,e.currentTarget.getAttribute('data-id'));
+						e.currentTarget.blur();
+					});
+				});
+
+			}
+			
 			return this;
 		}
 

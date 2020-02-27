@@ -4,11 +4,13 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta charset="utf-8" />
 	<link rel="StyleSheet" href="resources/style.css" type="text/css" />
+	<link rel="StyleSheet" href="resources/leaflet.css" type="text/css" />
 	<link href="resources/images/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon">
 	<link rel="alternate" type="application/rss+xml" title="RSS Feed for ODI Leeds" href="/blog/rss" />
 	<script src="resources/stuquery.min.js"></script>
 	<script src="resources/traffic-growth.js"></script>
 	<script type="text/javascript" src="resources/stuquery.barchart.js"></script>
+	<script type="text/javascript" src="resources/leaflet.js"></script>
 	<style>
 	.barchart {
 		height: 250px;
@@ -141,6 +143,9 @@
 	.tag { display: inline-block; line-height: 2em; padding-left: 0.5em; border-radius:2px; overflow: hidden; }
 	.tag .close { float: right; height: 2em; width: 2em; text-align: center; text-decoration: none; color: white!important; background: rgba(0,0,0,0.5); margin-left: 0.5em; position: relative; }
 	.tag .close:hover { background-color: black; }
+	#map { height: 400px; }
+	#map .leaflet-container { font-size: 16px; }
+	#map .leaflet-popup-content a { font: inherit; font-size: inherit; color: inherit; margin-right: 0.5em; }
 	</style>
 	<title>Traffic Growth | ODI Leeds</title>
 	<meta name="twitter:card" content="summary">
@@ -186,7 +191,7 @@
 		<div class="holder">
 			<p>A project using <a href="https://datamillnorth.org/dataset/leeds-annual-cycle-growth-">traffic growth data</a> from Data Mill North. Select a cycle counter to see charts.</p>
 			<div id="traffic">
-				<div class="map b5-bg padded padded-bottom">There will be a map here which will show the traffic counters and let you select them. In the mean time try this <a href="?leeds-cycle-100122:1;leeds-cycle-100122:2">example</a> which will load two counters.</div>
+				<div id="map" class="map b5-bg padded padded-bottom">There will be a map here which will show the traffic counters and let you select them. In the mean time try this <a href="?leeds-cycle-100122:1;leeds-cycle-100122:2">example</a> which will load two counters.</div>
 				<div class="output"></div>
 			</div>
 		</div>
