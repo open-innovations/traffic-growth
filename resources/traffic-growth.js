@@ -209,7 +209,7 @@ S(document).ready(function(){
 
 			if(this.selected.length==0) return this;
 			
-			html = '<h2>Counts by hour of day</h2><div id="barchart-hourly"></div><h2>Counts by day of week</h2><div id="barchart-dow"></div><h2>Counts by month</h2><div id="barchart-monthly"></div><h2>Counts by year</h2><div id="barchart-yearly"></div>';
+			html = '<h2>Counts by hour of day (total over the period)</h2><div id="barchart-hourly"></div><h2>Counts by day of week (total over the period)</h2><div id="barchart-dow"></div><h2>Counts by month (total over the period)</h2><div id="barchart-monthly"></div><h2>Counts by year</h2><div id="barchart-yearly"></div>';
 			if(el.find('.charts').length==0) el.find('.output').append('<div class="charts">'+html+'</div>');
 			else el.find('.charts').html(html);
 
