@@ -133,6 +133,7 @@ S(document).ready(function(){
 		
 		this.addCounter = function(sensor,lane){
 			console.log('addCounter',sensor,lane);
+			history.pushState({page: 1}, "title 1", location.search+';'+sensor+':'+lane);
 			this.selectCounter([sensor,lane],function(idx){
 				this.display();
 			});
