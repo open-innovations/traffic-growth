@@ -100,34 +100,46 @@ S(document).ready(function(){
 			//idx = parseInt(idx);
 			(bits) = idx[0].split(/-/);
 
-			// Add the code to the list of selected airports
-			this.selected.push({'sensor':idx[0],'lane':idx[1]});
-			
-			if(!idx){
-				console.warn('Unable to find counter', this.counters,idx);
-				return this;
+			var match = false;
+			for(c = 0; c < this.selected.length; c++){
+				if(this.selected[c].sensor == idx[0] && this.selected[c].lane == idx[1]) match = true;
 			}
-			if(typeof this.counters[idx[0]].lanes[idx[1]].file!=="string") this.counters[idx[0]].lanes[idx[1]].file = bits[0]+'/'+bits[1]+'-'+bits[2]+'-'+idx[1]+'.csv';
-
-			// Select this counter/lane
-			this.counters[idx[0]].lanes[idx[1]].selected = true;
 			
-			//console.log(this.counters[idx[0]].lanes[idx[1]]);
+			if(match){
+				console.warn('We already have '+idx[0]+' lane '+idx[1]);
+				if(typeof callback==="function") callback.call(this,idx);
+			}else{
 
-			S().ajax('data/'+this.counters[idx[0]].lanes[idx[1]].file,{
-				'dataType': 'text',
-				'this': this,
-				'cache': false,
-				'idx':idx,
-				'callback':callback,
-				'success': function(d,attr){
-					this.counters[attr.idx[0]].lanes[attr.idx[1]].data = CSV2JSON(d);
-					if(typeof callback==="function") callback.call(this,attr.idx);
-				},
-				'error': function(e,attr){
-					console.error('Unable to load '+attr.url);
+
+				// Add the code to the list of selected airports
+				this.selected.push({'sensor':idx[0],'lane':idx[1],'colour':this.getUnusedColour()});
+				
+				if(!idx){
+					console.warn('Unable to find counter', this.counters,idx);
+					return this;
 				}
-			});
+				if(typeof this.counters[idx[0]].lanes[idx[1]].file!=="string") this.counters[idx[0]].lanes[idx[1]].file = bits[0]+'/'+bits[1]+'-'+bits[2]+'-'+idx[1]+'.csv';
+
+				// Select this counter/lane
+				this.counters[idx[0]].lanes[idx[1]].selected = true;
+				
+				//console.log(this.counters[idx[0]].lanes[idx[1]]);
+
+				S().ajax('data/'+this.counters[idx[0]].lanes[idx[1]].file,{
+					'dataType': 'text',
+					'this': this,
+					'cache': false,
+					'idx':idx,
+					'callback':callback,
+					'success': function(d,attr){
+						this.counters[attr.idx[0]].lanes[attr.idx[1]].data = CSV2JSON(d);
+						if(typeof callback==="function") callback.call(this,attr.idx);
+					},
+					'error': function(e,attr){
+						console.error('Unable to load '+attr.url);
+					}
+				});				
+			}
 			return this;
 		}
 		
@@ -179,7 +191,7 @@ S(document).ready(function(){
 			html = '<ul class="tags">';
 			for(c = 0; c < this.selected.length; c++){
 				idx = [this.selected[c].sensor,this.selected[c].lane];
-				if(!this.selected[c].colour) this.selected[c].colour = this.getUnusedColour();
+				//if(!this.selected[c].colour) this.selected[c].colour = this.getUnusedColour();
 				n = this.selected[c].colour;
 				//console.log('tag',c,n,this.selected[c]);
 				html += '<li class="select-'+idx[0]+'-'+idx[1]+'"><div class="tag '+colours[n]+'" title="'+this.counters[idx[0]].name+'">'+(this.counters[idx[0]].name||'')+' (lane '+idx[1]+')'+'<a href="#" class="close" title="Remove '+this.counters[idx[0]].name+'" data-sensor="'+idx[0]+'" data-lane="'+idx[1]+'">&times;</a></div></li>';
