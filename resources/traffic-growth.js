@@ -13,9 +13,22 @@ S(document).ready(function(){
 		if(this.pushstate){
 			var _obj = this;
 			window[(this.pushstate) ? 'onpopstate' : 'onhashchange'] = function(e){
+				//console.log('popstate',e.state);
 				if(e && e.state){
 					_obj.selected = e.state.selected;
-					_obj.display();
+					
+					var missing = false;	
+					for(c = 0; c < _obj.selected.length; c++){
+						if(!this.counters[_obj.selected[c].sensor] || !this.counters[_obj.selected[c].sensor].lanes[_obj.selected[c].lane].data){
+							missing = true;
+						}
+					}
+					if(missing){
+						_obj.selected = [];
+						_obj.processQueryString();						
+					}else{
+						_obj.display();
+					}
 				}else{
 					_obj.selected = [];
 					_obj.processQueryString();
@@ -74,10 +87,8 @@ S(document).ready(function(){
 			var c,i,found,code,a,l;
 			for(c = 0; c < colours.length; c++){
 				found = false;
-				for(a in this.counters){
-					for(l in this.counters[a].lanes){
-						if(typeof this.counters[a].lanes[l].colour==="number" && this.counters[a].lanes[l].colour==c) found = true;
-					}
+				for(a = 0; a < this.selected.length; a++){
+					if(typeof this.selected[a].colour==="number" && this.selected[a].colour==c) found = true;
 				}
 				if(!found) return c;
 			}
@@ -96,14 +107,12 @@ S(document).ready(function(){
 				console.warn('Unable to find counter', this.counters,idx);
 				return this;
 			}
-			
-			if(typeof this.counters[idx[0]].lanes[idx[1]].colour!=="number") this.counters[idx[0]].lanes[idx[1]].colour = this.getUnusedColour();
 			if(typeof this.counters[idx[0]].lanes[idx[1]].file!=="string") this.counters[idx[0]].lanes[idx[1]].file = bits[0]+'/'+bits[1]+'-'+bits[2]+'-'+idx[1]+'.csv';
 
 			// Select this counter/lane
 			this.counters[idx[0]].lanes[idx[1]].selected = true;
 			
-			console.log(this.counters[idx[0]].lanes[idx[1]]);
+			//console.log(this.counters[idx[0]].lanes[idx[1]]);
 
 			S().ajax('data/'+this.counters[idx[0]].lanes[idx[1]].file,{
 				'dataType': 'text',
@@ -127,15 +136,15 @@ S(document).ready(function(){
 			str = "";
 			for(var i = 0; i < this.selected.length; i++) str += (str ? ';':'')+this.selected[i].sensor+":"+this.selected[i].lane;
 			
-			if(this.pushstate) history.pushState({selected:this.selected,'airports':this.airports},"Airports",(this.airportlist != str ? '?'+str : '?'));
-			this.airportlist = str;
+			//console.log('pushState');
+			if(this.pushstate) history.pushState({selected:this.selected},"Traffic Growth",'?'+str);
 		}
 		
 		this.addCounter = function(sensor,lane){
-			console.log('addCounter',sensor,lane);
-			history.pushState({page: 1}, "title 1", location.search+';'+sensor+':'+lane);
+			//console.log('addCounter',sensor,lane);
 			this.selectCounter([sensor,lane],function(idx){
 				this.display();
+				this.updateHistory();
 			});
 			return this;
 		}
@@ -143,27 +152,25 @@ S(document).ready(function(){
 		this.removeCounter = function(sensor,lane){
 			var idx = [sensor,lane];
 			el.find('.select-'+idx[0]+'-'+idx[1]).remove();
-			console.log('Remove',idx);
+			//console.log('Remove',sensor,lane,this.counters[idx[0]]);
 			if(this.counters[idx[0]]){
-				delete this.counters[idx[0]].lanes[idx[1]].colour;
 				var match = -1;
 				for(c = 0; c < this.selected.length; c++){
 					if(this.selected[c].sensor==idx[0] && this.selected[c].lane==idx[1]) match = c;
 				}
-		
 				if(match >= 0) this.selected.splice(match,1);
 				this.counters[idx[0]].lanes[idx[1]].selected = false;
 				this.display();
 			}else{
 				console.warning('No index '+idx)
 			}
+			//console.log('selected',this.selected);
 			this.updateHistory();
 			return this;
 		}
 
 		this.display = function(){
 
-			console.log('here')
 			var c,code,n,idx,a;
 			
 			// Reset
@@ -172,7 +179,9 @@ S(document).ready(function(){
 			html = '<ul class="tags">';
 			for(c = 0; c < this.selected.length; c++){
 				idx = [this.selected[c].sensor,this.selected[c].lane];
-				n = this.counters[idx[0]].lanes[idx[1]].colour;
+				if(!this.selected[c].colour) this.selected[c].colour = this.getUnusedColour();
+				n = this.selected[c].colour;
+				//console.log('tag',c,n,this.selected[c]);
 				html += '<li class="select-'+idx[0]+'-'+idx[1]+'"><div class="tag '+colours[n]+'" title="'+this.counters[idx[0]].name+'">'+(this.counters[idx[0]].name||'')+' (lane '+idx[1]+')'+'<a href="#" class="close" title="Remove '+this.counters[idx[0]].name+'" data-sensor="'+idx[0]+'" data-lane="'+idx[1]+'">&times;</a></div></li>';
 			}
 			html += '</ul>';
@@ -197,11 +206,15 @@ S(document).ready(function(){
 
 			for(a in this.counters){
 				for(l in this.counters[a].lanes){
-					if(this.counters[a].lanes[l].selected && this.counters[a].lanes[l].data){
-						for(var i = 0; i < this.counters[a].lanes[l].data.rows.length; i++){
-							d = this.counters[a].lanes[l].data.rows[i][0];
-							if(d < min) min = d;
-							if(d > max) max = d;
+					if(this.counters[a].lanes[l].data){
+						for(s = 0; s < this.selected.length; s++){
+							if(this.selected[s].sensor == a && this.selected[s].lane == l){
+								for(var i = 0; i < this.counters[a].lanes[l].data.rows.length; i++){
+									d = this.counters[a].lanes[l].data.rows[i][0];
+									if(d < min) min = d;
+									if(d > max) max = d;
+								}
+							}
 						}
 					}
 				}
@@ -209,6 +222,10 @@ S(document).ready(function(){
 
 			var ds = new Date(min);
 			var de = new Date(max);
+			
+			if(min == "3000-12-01"){
+				console.warn('Counter data seems to be lacking dates',this.counters,min,max,this.selected);
+			}
 
 			// Create data arrays
 			var data = {'hourly':[],'dow':[],'monthly':[],'yearly':[]};
@@ -228,22 +245,26 @@ S(document).ready(function(){
 				for(d = 0; d < 7; d++) data.dow[d][1][c] = 0;
 				for(m = 0; m < 12; m++) data.monthly[m][1][c] = 0;
 				for(y = 0; y < data.yearly.length; y++) data.yearly[y][1][c] = 0;
-				for(var i = 0; i < this.counters[idx[0]].lanes[idx[1]].data.rows.length; i++){
-					d = new Date(this.counters[idx[0]].lanes[idx[1]].data.rows[i][0]);
-					t = 0;
-					for(h = 0; h < 24; h++){
-						n = this.counters[idx[0]].lanes[idx[1]].data.rows[i][h+1];
-						if(n){
-							n = parseInt(n);
-							if(!isNaN(n)){
-								data.hourly[h][1][c] += n;
-								t += n;
+				if(this.counters[idx[0]].lanes[idx[1]].data){
+					for(var i = 0; i < this.counters[idx[0]].lanes[idx[1]].data.rows.length; i++){
+						d = new Date(this.counters[idx[0]].lanes[idx[1]].data.rows[i][0]);
+						t = 0;
+						for(h = 0; h < 24; h++){
+							n = this.counters[idx[0]].lanes[idx[1]].data.rows[i][h+1];
+							if(n){
+								n = parseInt(n);
+								if(!isNaN(n)){
+									data.hourly[h][1][c] += n;
+									t += n;
+								}
 							}
 						}
+						data.dow[(d.getDay()+6) % 7][1][c] += t;	// Shift day-of-week from Sunday start to Monday start
+						data.monthly[d.getMonth()][1][c] += t;
+						data.yearly[(d.getUTCFullYear()-ds.getUTCFullYear())+""][1][c] += t;
 					}
-					data.dow[(d.getDay()+6) % 7][1][c] += t;	// Shift day-of-week from Sunday start to Monday start
-					data.monthly[d.getMonth()][1][c] += t;
-					data.yearly[(d.getUTCFullYear()-ds.getUTCFullYear())+""][1][c] += t;
+				}else{
+					console.warn('No data loaded for '+idx[0]+' lane '+idx[1]);
 				}
 			}
 
@@ -255,7 +276,7 @@ S(document).ready(function(){
 				cls = "";
 				if(typeof series==="number"){
 					idx = _obj.selected[series];
-					c = _obj.counters[idx.sensor].lanes[idx.lane].colour;
+					c = _obj.selected[series].colour;
 					return (colours[c])+cls;
 				}else return cls;
 			}
@@ -388,16 +409,17 @@ S(document).ready(function(){
 							this._popup.setContent('<div id="popup-'+this.options.id+'">'+str+'</ul></div>');
 						});
 					}
-					console.log(c,this.counters[c]);
+					//console.log(c,this.counters[c]);
 				}
 				var _obj = this;
 				// Add events to buttons 
 				this.map.on('popupopen', function(e) {
 					var marker = e.popup._source;
-					console.log('popupopen',marker.options.id,marker.options);
-					S('#popup-'+marker.options.id+' a.button').on('click',{options:marker.options},function(e){
+					//console.log('popupopen',marker.options.id,marker.options);
+					S('.leaflet-popup-content a.button').on('click',{options:marker.options},function(e){
 						e.preventDefault();
 						e.stopPropagation();
+						//console.log('click');
 						_obj.addCounter(e.data.options.id,e.currentTarget.getAttribute('data-id'));
 						e.currentTarget.blur();
 					});

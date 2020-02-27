@@ -266,7 +266,7 @@
 				hc = h-ha-hb;
 				if(ha < 0) ha = 0;
 				if(hc < 0) hc = 0;
-if(b == 0) console.log(hbar,htop,mx,r,this.bins[b].value/r,ha,hb,hc)
+//if(b == 0) console.log(hbar,htop,mx,r,this.bins[b].value/r,ha,hb,hc)
 //				// If the value is negative we shift it down a pixel to see the zero line
 //				if(this.bins[b].value < 0){ ha++; hb--; }
 				idbar = id+'-bar-'+(typeof key==="string" ? b : key.replace(/ /g,'-'));
