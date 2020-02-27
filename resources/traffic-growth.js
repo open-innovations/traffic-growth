@@ -377,14 +377,14 @@ S(document).ready(function(){
 				var markers = [];
 				for(var c in this.counters){
 					if(this.counters[c].c){
-						markers.push(L.marker(this.counters[c].c,{icon: customicon,id:c,counter:this.counters[c]}).bindPopup('Test').addTo(this.map));
+						markers.push(L.marker(this.counters[c].c,{icon: customicon,id:c,counter:this.counters[c]}).bindPopup('Test',{'minWidth':288}).addTo(this.map));
 						//changing the content on mouseover
 						markers[markers.length-1].on('mouseover', function(m){
-							str = '<h3>'+this.options.counter.name+'</h3><p>'+this.options.counter.desc+'</p>';
+							str = '<h3>'+this.options.counter.name+'</h3><p>'+this.options.counter.desc+'</p><ul>';
 							for(var l in this.options.counter.lanes){
-								str += '<a href="#" class="button seasonal-accent" data-id="'+l+'">&plus; Lane '+l+'</a>';
+								str += '<li><a href="#" class="button seasonal-accent" data-id="'+l+'">&plus; Lane '+l+'</a></li>';
 							}
-							this._popup.setContent('<div id="popup-'+this.options.id+'">'+str+'</div>');
+							this._popup.setContent('<div id="popup-'+this.options.id+'">'+str+'</ul></div>');
 						});
 					}
 					console.log(c,this.counters[c]);
