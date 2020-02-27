@@ -164,7 +164,6 @@ S(document).ready(function(){
 		this.removeCounter = function(sensor,lane){
 			var idx = [sensor,lane];
 			el.find('.select-'+idx[0]+'-'+idx[1]).remove();
-			//console.log('Remove',sensor,lane,this.counters[idx[0]]);
 			if(this.counters[idx[0]]){
 				var match = -1;
 				for(c = 0; c < this.selected.length; c++){
@@ -176,8 +175,22 @@ S(document).ready(function(){
 			}else{
 				console.warning('No index '+idx)
 			}
-			//console.log('selected',this.selected);
+
+			this.setMarker(sensor);
 			this.updateHistory();
+			return this;
+		}
+
+		this.setMarker = function(sensor){
+		
+			S('body').append('<div class="seasonal-accent" id="_temp"></div>');
+			var bg = window.getComputedStyle(S('#_temp')[0]).backgroundColor;
+			S('#_temp').remove();
+			var haslane = false;
+			for(l in this.counters[sensor].lanes){
+				if(this.counters[sensor].lanes[l].selected) haslane = true;
+			}
+			S('#marker-'+sensor).find('path').css({'fill':(haslane ? bg : '#000000')});
 			return this;
 		}
 
@@ -191,9 +204,7 @@ S(document).ready(function(){
 			html = '<ul class="tags">';
 			for(c = 0; c < this.selected.length; c++){
 				idx = [this.selected[c].sensor,this.selected[c].lane];
-				//if(!this.selected[c].colour) this.selected[c].colour = this.getUnusedColour();
 				n = this.selected[c].colour;
-				//console.log('tag',c,n,this.selected[c]);
 				html += '<li class="select-'+idx[0]+'-'+idx[1]+'"><div class="tag '+colours[n]+'" title="'+this.counters[idx[0]].name+'">'+(this.counters[idx[0]].name||'')+' (lane '+idx[1]+')'+'<a href="#" class="close" title="Remove '+this.counters[idx[0]].name+'" data-sensor="'+idx[0]+'" data-lane="'+idx[1]+'">&times;</a></div></li>';
 			}
 			html += '</ul>';
@@ -217,6 +228,7 @@ S(document).ready(function(){
 			var max = "0001-01-01";
 
 			for(a in this.counters){
+				haslane = false;
 				for(l in this.counters[a].lanes){
 					if(this.counters[a].lanes[l].data){
 						for(s = 0; s < this.selected.length; s++){
@@ -230,14 +242,13 @@ S(document).ready(function(){
 						}
 					}
 				}
+				this.setMarker(a);
 			}
 
 			var ds = new Date(min);
 			var de = new Date(max);
 			
-			if(min == "3000-12-01"){
-				console.warn('Counter data seems to be lacking dates',this.counters,min,max,this.selected);
-			}
+			if(min == "3000-12-01") console.warn('Counter data seems to be lacking dates',this.counters,min,max,this.selected);
 
 			// Create data arrays
 			var data = {'hourly':[],'dow':[],'monthly':[],'yearly':[]};
@@ -393,27 +404,24 @@ S(document).ready(function(){
 					[lat+d, lon+d]
 				]);
 				
-				function makeMarker(colour){
+				function makeMarker(colour,name,id){
 					return L.divIcon({
 						'className': '',
-						'html':	'<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" width="7.0556mm" height="11.571mm" viewBox="0 0 25 41.001" id="svg2" version="1.1"><g id="layer1" transform="translate(1195.4,216.71)"><path style="fill:%COLOUR%;fill-opacity:1;fill-rule:evenodd;stroke:#ffffff;stroke-width:0.1;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" d="M 12.5 0.5 A 12 12 0 0 0 0.5 12.5 A 12 12 0 0 0 1.8047 17.939 L 1.8008 17.939 L 12.5 40.998 L 23.199 17.939 L 23.182 17.939 A 12 12 0 0 0 24.5 12.5 A 12 12 0 0 0 12.5 0.5 z " transform="matrix(1,0,0,1,-1195.4,-216.71)" id="path4147" /><ellipse style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.428;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" id="path4173" cx="-1182.9" cy="-204.47" rx="5.3848" ry="5.0002" /></g></svg>'.replace(/%COLOUR%/,colour||"#000000"),
+						'html':	'<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" width="25px" height="41px" viewBox="0 0 25 41" id="marker-'+id+'" version="1.1" style="overflow:visible">'+(name ? '<text x="12.5" y="-2" text-anchor="middle" style="font: inherit;opacity:0.5;">'+name+'</text>':'')+'<g id="layer1" transform="translate(1195.4,216.71)"><path style="fill:%COLOUR%;fill-opacity:1;fill-rule:evenodd;stroke:#ffffff;stroke-width:0.1;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" d="M 12.5 0.5 A 12 12 0 0 0 0.5 12.5 A 12 12 0 0 0 1.8047 17.939 L 1.8008 17.939 L 12.5 40.998 L 23.199 17.939 L 23.182 17.939 A 12 12 0 0 0 24.5 12.5 A 12 12 0 0 0 12.5 0.5 z " transform="matrix(1,0,0,1,-1195.4,-216.71)" id="path4147" /><ellipse style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.428;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" id="path4173" cx="-1182.9" cy="-204.47" rx="5.3848" ry="5.0002" /></g></svg>'.replace(/%COLOUR%/,colour||"#000000"),
 						iconSize:	 [25, 41], // size of the icon
-						shadowSize:	 [41, 41], // size of the shadow
 						iconAnchor:	 [12.5, 41], // point of the icon which will correspond to marker's location
-						shadowAnchor: [12.5, 41],	// the same for the shadow
 						popupAnchor:	[0, -41] // point from which the popup should open relative to the iconAnchor
 					});
 				}
 				//S('body').append('<div class="seasonal-accent" id="_temp"></div>');
 				//var bg = window.getComputedStyle(S('#_temp')[0]).backgroundColor;
 				//S('#_temp').remove();
-				var customicon = makeMarker();
-				var markers = [];
+				this.markers = [];
 				for(var c in this.counters){
 					if(this.counters[c].c){
-						markers.push(L.marker(this.counters[c].c,{icon: customicon,id:c,counter:this.counters[c]}).bindPopup('Test',{'minWidth':288}).addTo(this.map));
+						this.markers.push(L.marker(this.counters[c].c,{icon: makeMarker(null,null,c),id:c,counter:this.counters[c]}).bindPopup('Test',{'minWidth':288}).addTo(this.map));
 						//changing the content on mouseover
-						markers[markers.length-1].on('mouseover', function(m){
+						this.markers[this.markers.length-1].on('mouseover', function(m){
 							str = '<h3>'+this.options.counter.name+'</h3><p>'+this.options.counter.desc+'</p><ul>';
 							for(var l in this.options.counter.lanes){
 								str += '<li><a href="#" class="button seasonal-accent" data-id="'+l+'">&plus; Lane '+l+'</a></li>';
@@ -421,7 +429,6 @@ S(document).ready(function(){
 							this._popup.setContent('<div id="popup-'+this.options.id+'">'+str+'</ul></div>');
 						});
 					}
-					//console.log(c,this.counters[c]);
 				}
 				var _obj = this;
 				// Add events to buttons 
@@ -431,7 +438,7 @@ S(document).ready(function(){
 					S('.leaflet-popup-content a.button').on('click',{options:marker.options},function(e){
 						e.preventDefault();
 						e.stopPropagation();
-						//console.log('click');
+						//S('#marker-'+e.data.options.id).find('path').css({'fill':'#396bad'});
 						_obj.addCounter(e.data.options.id,e.currentTarget.getAttribute('data-id'));
 						e.currentTarget.blur();
 					});
