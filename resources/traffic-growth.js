@@ -427,23 +427,17 @@ S(document).ready(function(){
 								str += '<li><a href="#" class="button seasonal-accent" data-id="'+l+'">&plus; Lane '+l+'</a></li>';
 							}
 							this._popup.setContent('<div id="popup-'+this.options.id+'">'+str+'</ul></div>');
+							// Add events to buttons 
+							S(this._popup._container).find('a.button').on('click',{options:this.options},function(e){
+								e.preventDefault();
+								e.stopPropagation();
+								_obj.addCounter(e.data.options.id,e.currentTarget.getAttribute('data-id'));
+								e.currentTarget.blur();
+							});
 						});
 					}
 				}
 				var _obj = this;
-				// Add events to buttons 
-				this.map.on('popupopen', function(e) {
-					var marker = e.popup._source;
-					//console.log('popupopen',marker.options.id,marker.options);
-					S('.leaflet-popup-content a.button').on('click',{options:marker.options},function(e){
-						e.preventDefault();
-						e.stopPropagation();
-						//S('#marker-'+e.data.options.id).find('path').css({'fill':'#396bad'});
-						_obj.addCounter(e.data.options.id,e.currentTarget.getAttribute('data-id'));
-						e.currentTarget.blur();
-					});
-				});
-
 			}
 			
 			return this;
