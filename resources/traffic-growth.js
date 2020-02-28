@@ -421,7 +421,7 @@ S(document).ready(function(){
 					if(this.counters[c].c){
 						this.markers.push(L.marker(this.counters[c].c,{icon: makeMarker(null,null,c),id:c,counter:this.counters[c]}).bindPopup('Test',{'minWidth':288}).addTo(this.map));
 						//changing the content on mouseover
-						this.markers[this.markers.length-1].on('mouseover', function(m){
+						this.markers[this.markers.length-1].on('click', function(m){
 							str = '<h3>'+this.options.counter.name+'</h3><p>'+this.options.counter.desc+'</p><ul>';
 							for(var l in this.options.counter.lanes){
 								str += '<li><a href="#" class="button seasonal-accent" data-id="'+l+'">&plus; Lane '+l+'</a></li>';
