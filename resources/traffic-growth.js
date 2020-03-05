@@ -387,9 +387,9 @@ S(document).ready(function(){
 		
 		this.buildMap = function(){
 			if(!this.map){
-				lat = 53.79659;
-				lon = -1.53385;
-				d = 0.10;
+				lat = 53.85;
+				lon = -1.45;
+				d = 0.20;
 			
 				this.baseMaps = {
 					'Default':  L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
