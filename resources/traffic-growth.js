@@ -205,7 +205,7 @@ S(document).ready(function(){
 			for(c = 0; c < this.selected.length; c++){
 				idx = [this.selected[c].sensor,this.selected[c].lane];
 				n = this.selected[c].colour;
-				html += '<li class="select-'+idx[0]+'-'+idx[1]+'"><div class="tag '+colours[n]+'" title="'+this.counters[idx[0]].name+'">'+(this.counters[idx[0]].name||'')+' (lane '+idx[1]+')'+'<a href="#" class="close" title="Remove '+this.counters[idx[0]].name+'" data-sensor="'+idx[0]+'" data-lane="'+idx[1]+'">&times;</a></div></li>';
+				html += '<li class="select-'+idx[0]+'-'+idx[1]+'"><div class="tag '+colours[n]+'" title="'+this.counters[idx[0]].name+'">'+(this.counters[idx[0]].name||'')+' ('+(this.counters[idx[0]].lanes[idx[1]].title || 'lane '+idx[1])+')'+'<a href="#" class="close" title="Remove '+this.counters[idx[0]].name+'" data-sensor="'+idx[0]+'" data-lane="'+idx[1]+'">&times;</a></div></li>';
 			}
 			html += '</ul>';
 			if(el.find('.tags').length==0) el.find('.output').append(html);
@@ -424,7 +424,7 @@ S(document).ready(function(){
 						this.markers[this.markers.length-1].on('click', function(m){
 							str = '<h3>'+this.options.counter.name+'</h3><p>'+this.options.counter.desc+'</p><ul>';
 							for(var l in this.options.counter.lanes){
-								str += '<li><a href="#" class="button seasonal-accent" data-id="'+l+'">&plus; Lane '+l+'</a></li>';
+								str += '<li><a href="#" class="button seasonal-accent" data-id="'+l+'">&plus; '+(this.options.counter.lanes[l].title ? this.options.counter.lanes[l].title : 'Lane '+l)+'</a></li>';
 							}
 							this._popup.setContent('<div id="popup-'+this.options.id+'">'+str+'</ul></div>');
 							// Add events to buttons 
