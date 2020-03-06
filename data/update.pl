@@ -127,9 +127,7 @@ sub getPackage {
 		$resources[$i]{'name'} =~ s/\s+$//g;
 		if($resources[$i]{'name'} =~ /([0-9]{4})/){
 			$y = $1;
-			#if($y < 2006){
-				push(@years,$y);
-			#}
+			push(@years,$y);
 			$file = $dir."/raw/$prefix".($prefix ? "-" : "").$y.".csv";
 			if(!-e $file){
 				print "Getting $dir > $prefix > $y\n";
