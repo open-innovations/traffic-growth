@@ -3,6 +3,7 @@ S(document).ready(function(){
 	function TrafficGrowth(){
 		el = S('#traffic');
 		this.selected = [];
+		this.counters = {};
 
 		var colours = ['c1-bg','c2-bg','c3-bg','c4-bg','c5-bg','c6-bg','c7-bg','c8-bg','c9-bg','c10-bg','c11-bg','c12-bg','c13-bg','c14-bg'];
 
@@ -35,20 +36,58 @@ S(document).ready(function(){
 				}
 			};
 		}
-
-		// Get the sensor index
-		S().ajax('data/index.json',{
-			'dataType': 'json',
-			'this': this,
-			'cache': false,
-			'success': function(d){
-				this.counters = d;
-				this.processQueryString();
-			},
-			'error': function(e,attr){
-				console.error('Unable to load file '+attr.url);
+		
+		this.addCounters = function(data,type){
+			for(var id in data){
+				if(data[id]){
+					this.counters[id] = data[id];
+					this.counters[id].type = type;
+				}
 			}
-		});
+			return this;
+		}
+
+		this.getCounterLocations = function(){
+
+			this.indextoload = 2;
+			this.indexloaded = 0;
+			this.counters = {};
+
+			// Get the cycle sensor index
+			S().ajax('data/index-cycle.json',{
+				'dataType': 'json',
+				'this': this,
+				'cache': false,
+				'type': 'cycle',
+				'success': function(d){
+					this.indexloaded++;
+					this.addCounters(d);
+					if(this.indextoload==this.indexloaded) this.processQueryString();
+				},
+				'error': function(e,attr){
+					console.error('Unable to load file '+attr.url);
+				}
+			});
+			
+			// Get the footfall sensor index
+			S().ajax('data/index-footfall.json',{
+				'dataType': 'json',
+				'this': this,
+				'cache': false,
+				'type': 'footfall',
+				'success': function(d){
+					this.indexloaded++;
+					this.addCounters(d);
+					if(this.indextoload==this.indexloaded) this.processQueryString();
+				},
+				'error': function(e,attr){
+					console.error('Unable to load file '+attr.url);
+				}
+			});
+			
+		}
+
+		this.getCounterLocations();
 		
 		this.processQueryString = function(){
 			el.find('.searchresults').remove();
@@ -152,7 +191,7 @@ S(document).ready(function(){
 			if(this.pushstate) history.pushState({selected:this.selected},"Traffic Growth",'?'+str);
 		}
 		
-		this.addCounter = function(sensor,lane){
+		this.addCounterToMap = function(sensor,lane){
 			//console.log('addCounter',sensor,lane);
 			this.selectCounter([sensor,lane],function(idx){
 				this.display();
@@ -431,7 +470,7 @@ S(document).ready(function(){
 							S(this._popup._container).find('a.button').on('click',{options:this.options},function(e){
 								e.preventDefault();
 								e.stopPropagation();
-								_obj.addCounter(e.data.options.id,e.currentTarget.getAttribute('data-id'));
+								_obj.addCounterToMap(e.data.options.id,e.currentTarget.getAttribute('data-id'));
 								e.currentTarget.blur();
 							});
 						});

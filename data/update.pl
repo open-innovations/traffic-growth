@@ -84,7 +84,7 @@ foreach $sensor (sort(keys(%sensors))){
 
 }
 
-open(FILE,">:utf8","index.json");
+open(FILE,">:utf8","index-cycle.json");
 print FILE "{\n";
 $i = 0;
 foreach $s (sort(keys(%sensorjson))){
