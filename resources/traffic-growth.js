@@ -64,7 +64,9 @@ S(document).ready(function(){
 					if(this.indextoload==this.indexloaded) this.processQueryString();
 				},
 				'error': function(e,attr){
+					this.indexloaded++;
 					console.error('Unable to load file '+attr.url);
+					if(this.indextoload==this.indexloaded) this.processQueryString();
 				}
 			});
 			
@@ -174,6 +176,7 @@ S(document).ready(function(){
 					},
 					'error': function(e,attr){
 						console.error('Unable to load '+attr.url);
+						if(typeof callback==="function") callback.call(this,attr.idx);
 					}
 				});				
 			}
@@ -227,7 +230,7 @@ S(document).ready(function(){
 			for(l in this.counters[sensor].lanes){
 				if(this.counters[sensor].lanes[l].selected) haslane = true;
 			}
-			S('#marker-'+sensor).find('path').css({'fill':(haslane ? bg : '#000000')});
+			S('#marker-'+sensor).find('path.bg').css({'fill':(haslane ? bg : '#000000')});
 			return this;
 		}
 
@@ -442,16 +445,14 @@ S(document).ready(function(){
 				]);
 
 				var svgs = {
-					'cycle':'<g transform="translate(12.5,41)"><path style="fill:%COLOUR%;fill-opacity:1;fill-rule:evenodd;stroke-width:0" d="M 0,0 l -10,-20 q -2.2 -5, -2 -9 a 12,12 1 0,1 24,1 q 0.2 4, -2 9 Z"></path><g transform="translate(0,-28)"><path style="fill:white;stroke-width:0;" d="M -4.5,4 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0 M -4.5,4 m -2,0 a 2,2 1 0,1 4,0 a 2,2 1 0,1 -4,0 M 4.5,4 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0 M 4.5,4 m -2,0 a 2,2 1 0,1 4,0 a 2,2 1 0,1 -4,0 "></path><path style="fill:white;stroke-width:0;" d="M 0.75,5 l -1.5,0 0,-3.2 c -3 -2, -3 -2,-2.5 -3 c 4 -4, 4 -4, 6 -2 q 1 1, 3 1 l 0,1.5 q -3,0 ,-4.5 -1.8 l -2,2 1.6,1.2 Z M 3.2,-6 m -1.5,0 a 1.5,1.5 0 1,0 3,0 a 1.5,1.5 0 1,0 -3,0"></path></g></g>',
-					'footfall':'<g transform="translate(12.5,41)"><path style="fill:%COLOUR%;fill-opacity:1;fill-rule:evenodd;stroke-width:0" d="M 0,0 l -10,-20 q -2.2 -5, -2 -9 a 12,12 1 0,1 24,1 q 0.2 4, -2 9 Z"></path><g transform="translate(0,-28)"><path style="fill:white;stroke-width:0;" d="M 3.5,8 q -2 2, -4 0 q -2 -5, -3 -7 q 0 -3, 2.5 -4 q 2 -1, 3,-1 c 1 4, -1 3, -1 6 c 0 1.5, 1 1.5,1 3Z"></path><path style="fill:white;stroke-width:0;" d="M -5,-4 a 0.5,0.5 1 0,1 1,1 a 0.5,0.5 1 0,1 -1,1 M -3.5,-5.2 a 0.6,0.6 1 0,1 1.2,1 a 0.6,0.6 1 0,1 -1.2,1 M -2,-6 a 0.7,0.7 1 0,1 1.4,1 a 0.7,0.7 1 0,1 -1.4,1 M 0,-6.8 a 0.8,0.8 1 0,1 1.6,1 a 0.8,0.8 1 0,1 -1.6,1 M 2,-7.4 a 1,1 1 0,1 2,1 a 1,1 1 0,1 -2,1 Z"></path></g></g>',
-					'marker':'<g id="layer1" transform="translate(1195.4,216.71)"><path style="fill:%COLOUR%;fill-opacity:1;fill-rule:evenodd;stroke:#ffffff;stroke-width:0.1;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" d="M 12.5 0.5 A 12 12 0 0 0 0.5 12.5 A 12 12 0 0 0 1.8047 17.939 L 1.8008 17.939 L 12.5 40.998 L 23.199 17.939 L 23.182 17.939 A 12 12 0 0 0 24.5 12.5 A 12 12 0 0 0 12.5 0.5 z " transform="matrix(1,0,0,1,-1195.4,-216.71)" id="path4147" /><ellipse style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.428;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" id="path4173" cx="-1182.9" cy="-204.47" rx="5.3848" ry="5.0002" /></g>'
+					'cycle':'<g transform="translate(12.5,41)"><path class="bg" style="fill:%COLOUR%;fill-opacity:1;fill-rule:evenodd;stroke-width:0" d="M 0,0 l -10,-20 q -2.2 -5, -2 -9 a 12,12 1 0,1 24,1 q 0.2 4, -2 9 Z"></path><g transform="translate(0,-28)"><path style="fill:white;stroke-width:0;" d="M -4.5,4 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0 M -4.5,4 m -2,0 a 2,2 1 0,1 4,0 a 2,2 1 0,1 -4,0 M 4.5,4 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0 M 4.5,4 m -2,0 a 2,2 1 0,1 4,0 a 2,2 1 0,1 -4,0 "></path><path style="fill:white;stroke-width:0;" d="M 0.75,5 l -1.5,0 0,-3.2 c -3 -2, -3 -2,-2.5 -3 c 4 -4, 4 -4, 6 -2 q 1 1, 3 1 l 0,1.5 q -3,0 ,-4.5 -1.8 l -2,2 1.6,1.2 Z M 3.2,-6 m -1.5,0 a 1.5,1.5 0 1,0 3,0 a 1.5,1.5 0 1,0 -3,0"></path></g></g>',
+					'footfall':'<g transform="translate(12.5,41)"><path class="bg" style="fill:%COLOUR%;fill-opacity:1;fill-rule:evenodd;stroke-width:0" d="M 0,0 l -10,-20 q -2.2 -5, -2 -9 a 12,12 1 0,1 24,1 q 0.2 4, -2 9 Z"></path><g transform="translate(0,-28)"><path style="fill:white;stroke-width:0;" d="M 3.5,8 q -2 2, -4 0 q -2 -5, -3 -7 q 0 -3, 2.5 -4 q 2 -1, 3,-1 c 1 4, -1 3, -1 6 c 0 1.5, 1 1.5,1 3Z"></path><path style="fill:white;stroke-width:0;" d="M -5,-4 a 0.5,0.5 1 0,1 1,1 a 0.5,0.5 1 0,1 -1,1 M -3.5,-5.2 a 0.6,0.6 1 0,1 1.2,1 a 0.6,0.6 1 0,1 -1.2,1 M -2,-6 a 0.7,0.7 1 0,1 1.4,1 a 0.7,0.7 1 0,1 -1.4,1 M 0,-6.8 a 0.8,0.8 1 0,1 1.6,1 a 0.8,0.8 1 0,1 -1.6,1 M 2,-7.4 a 1,1 1 0,1 2,1 a 1,1 1 0,1 -2,1 Z"></path></g></g>',
+					'marker':'<g id="layer1" transform="translate(1195.4,216.71)"><path class="bg" style="fill:%COLOUR%;fill-opacity:1;fill-rule:evenodd;stroke:#ffffff;stroke-width:0.1;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" d="M 12.5 0.5 A 12 12 0 0 0 0.5 12.5 A 12 12 0 0 0 1.8047 17.939 L 1.8008 17.939 L 12.5 40.998 L 23.199 17.939 L 23.182 17.939 A 12 12 0 0 0 24.5 12.5 A 12 12 0 0 0 12.5 0.5 z " transform="matrix(1,0,0,1,-1195.4,-216.71)" id="path4147" /><ellipse style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.428;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" id="path4173" cx="-1182.9" cy="-204.47" rx="5.3848" ry="5.0002" /></g>'
 				}
 				
 				function makeMarker(type,name,id){
 					colour = "black";
-					if(type == "cycle") colour = "#2254F4";
-					else if(type == "footfall") colour = "#722EA5";
-					else type = "marker";
+					if(type != "cycle" && type != "footfall") type = "marker";
 					return L.divIcon({
 						'className': '',
 						'html':	('<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" width="25px" height="41px" viewBox="0 0 25 41" id="marker-'+id+'" version="1.1" style="overflow:visible">'+(name ? '<text x="12.5" y="-2" text-anchor="middle" style="font: inherit;opacity:0.5;">'+name+'</text>':'')+svgs[type]+'</svg>').replace(/%COLOUR%/,colour||"#000000"),

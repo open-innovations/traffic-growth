@@ -1,10 +1,10 @@
 {
-	"leeds-footfall-1": {"start":"","c":[53.79666,-1.54260],"name":"Counter 1","desc":"Briggate","orientation":"","lanes":{"1":{"start":"","b":0,"title":""}}},
-	"leeds-footfall-2": {"start":"","c":[53.79885,-1.54192],"name":"Counter 2","desc":"Briggate at McDonalds","orientation":"","lanes":{"1":{"start":"","b":0,"title":""}}},
-	"leeds-footfall-3": {"start":"","c":[53.79928,-1.54403],"name":"Counter 3","desc":"The Headrow","orientation":"","lanes":{"1":{"start":"","b":0,"title":""}}},
-	"leeds-footfall-4": {"start":"","c":[53.79944,-1.54406],"name":"Counter 4","desc":"Dortmund Square","orientation":"","lanes":{"1":{"start":"","b":0,"title":""}}},
-	"leeds-footfall-5": {"start":"","c":[53.79742,-1.54511],"name":"Counter 5","desc":"Albion Street North","orientation":"","lanes":{"1":{"start":"","b":0,"title":""}}},
-	"leeds-footfall-6": {"start":"","c":[53.79729,-1.54511],"name":"Counter 6","desc":"Albion Street South","orientation":"","lanes":{"1":{"start":"","b":0,"title":""}}},
-	"leeds-footfall-7": {"start":"","c":[53.79732,-1.54418],"name":"Counter 7","desc":"Commercial Street","orientation":"","lanes":{"1":{"start":"","b":0,"title":""}}},
-	"leeds-footfall-8": {"start":"","c":[53.79734,-1.54369],"name":"Counter 8","desc":"Commercial Street at Barratts","orientation":"","lanes":{"1":{"start":"","b":0,"title":""}}}
+	"leeds-footfall-1": {"start":"","c":[53.79666,-1.54260],"name":"LCC footfall counter 1","desc":"Briggate","orientation":"","lanes":{"1":{"start":"","b":0,"title":""}}},
+	"leeds-footfall-2": {"start":"","c":[53.79885,-1.54192],"name":"LCC footfall counter 2","desc":"Briggate at McDonalds","orientation":"","lanes":{"1":{"start":"","b":0,"title":""}}},
+	"leeds-footfall-3": {"start":"","c":[53.79928,-1.54403],"name":"LCC footfall counter 3","desc":"The Headrow","orientation":"","lanes":{"1":{"start":"","b":0,"title":""}}},
+	"leeds-footfall-4": {"start":"","c":[53.79944,-1.54406],"name":"LCC footfall counter 4","desc":"Dortmund Square","orientation":"","lanes":{"1":{"start":"","b":0,"title":""}}},
+	"leeds-footfall-5": {"start":"","c":[53.79742,-1.54511],"name":"LCC footfall counter 5","desc":"Albion Street North","orientation":"","lanes":{"1":{"start":"","b":0,"title":""}}},
+	"leeds-footfall-6": {"start":"","c":[53.79729,-1.54511],"name":"LCC footfall counter 6","desc":"Albion Street South","orientation":"","lanes":{"1":{"start":"","b":0,"title":""}}},
+	"leeds-footfall-7": {"start":"","c":[53.79732,-1.54418],"name":"LCC footfall counter 7","desc":"Commercial Street","orientation":"","lanes":{"1":{"start":"","b":0,"title":""}}},
+	"leeds-footfall-8": {"start":"","c":[53.79734,-1.54369],"name":"LCC footfall counter 8","desc":"Commercial Street at Barratts","orientation":"","lanes":{"1":{"start":"","b":0,"title":""}}}
 }
