@@ -58,10 +58,9 @@ S(document).ready(function(){
 				'dataType': 'json',
 				'this': this,
 				'cache': false,
-				'type': 'cycle',
 				'success': function(d){
 					this.indexloaded++;
-					this.addCounters(d);
+					this.addCounters(d,'cycle');
 					if(this.indextoload==this.indexloaded) this.processQueryString();
 				},
 				'error': function(e,attr){
@@ -74,10 +73,9 @@ S(document).ready(function(){
 				'dataType': 'json',
 				'this': this,
 				'cache': false,
-				'type': 'footfall',
 				'success': function(d){
 					this.indexloaded++;
-					this.addCounters(d);
+					this.addCounters(d,'footfall');
 					if(this.indextoload==this.indexloaded) this.processQueryString();
 				},
 				'error': function(e,attr){
@@ -442,11 +440,21 @@ S(document).ready(function(){
 					[lat-d, lon-d],
 					[lat+d, lon+d]
 				]);
+
+				var svgs = {
+					'cycle':'<g transform="translate(12.5,41)"><path style="fill:%COLOUR%;fill-opacity:1;fill-rule:evenodd;stroke-width:0" d="M 0,0 l -10,-20 q -2.2 -5, -2 -9 a 12,12 1 0,1 24,1 q 0.2 4, -2 9 Z"></path><g transform="translate(0,-28)"><path style="fill:white;stroke-width:0;" d="M -4.5,4 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0 M -4.5,4 m -2,0 a 2,2 1 0,1 4,0 a 2,2 1 0,1 -4,0 M 4.5,4 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0 M 4.5,4 m -2,0 a 2,2 1 0,1 4,0 a 2,2 1 0,1 -4,0 "></path><path style="fill:white;stroke-width:0;" d="M 0.75,5 l -1.5,0 0,-3.2 c -3 -2, -3 -2,-2.5 -3 c 4 -4, 4 -4, 6 -2 q 1 1, 3 1 l 0,1.5 q -3,0 ,-4.5 -1.8 l -2,2 1.6,1.2 Z M 3.2,-6 m -1.5,0 a 1.5,1.5 0 1,0 3,0 a 1.5,1.5 0 1,0 -3,0"></path></g></g>',
+					'footfall':'<g transform="translate(12.5,41)"><path style="fill:%COLOUR%;fill-opacity:1;fill-rule:evenodd;stroke-width:0" d="M 0,0 l -10,-20 q -2.2 -5, -2 -9 a 12,12 1 0,1 24,1 q 0.2 4, -2 9 Z"></path><g transform="translate(0,-28)"><path style="fill:white;stroke-width:0;" d="M 3.5,8 q -2 2, -4 0 q -2 -5, -3 -7 q 0 -3, 2.5 -4 q 2 -1, 3,-1 c 1 4, -1 3, -1 6 c 0 1.5, 1 1.5,1 3Z"></path><path style="fill:white;stroke-width:0;" d="M -5,-4 a 0.5,0.5 1 0,1 1,1 a 0.5,0.5 1 0,1 -1,1 M -3.5,-5.2 a 0.6,0.6 1 0,1 1.2,1 a 0.6,0.6 1 0,1 -1.2,1 M -2,-6 a 0.7,0.7 1 0,1 1.4,1 a 0.7,0.7 1 0,1 -1.4,1 M 0,-6.8 a 0.8,0.8 1 0,1 1.6,1 a 0.8,0.8 1 0,1 -1.6,1 M 2,-7.4 a 1,1 1 0,1 2,1 a 1,1 1 0,1 -2,1 Z"></path></g></g>',
+					'marker':'<g id="layer1" transform="translate(1195.4,216.71)"><path style="fill:%COLOUR%;fill-opacity:1;fill-rule:evenodd;stroke:#ffffff;stroke-width:0.1;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" d="M 12.5 0.5 A 12 12 0 0 0 0.5 12.5 A 12 12 0 0 0 1.8047 17.939 L 1.8008 17.939 L 12.5 40.998 L 23.199 17.939 L 23.182 17.939 A 12 12 0 0 0 24.5 12.5 A 12 12 0 0 0 12.5 0.5 z " transform="matrix(1,0,0,1,-1195.4,-216.71)" id="path4147" /><ellipse style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.428;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" id="path4173" cx="-1182.9" cy="-204.47" rx="5.3848" ry="5.0002" /></g>'
+				}
 				
-				function makeMarker(colour,name,id){
+				function makeMarker(type,name,id){
+					colour = "black";
+					if(type == "cycle") colour = "#2254F4";
+					else if(type == "footfall") colour = "#722EA5";
+					else type = "marker";
 					return L.divIcon({
 						'className': '',
-						'html':	'<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" width="25px" height="41px" viewBox="0 0 25 41" id="marker-'+id+'" version="1.1" style="overflow:visible">'+(name ? '<text x="12.5" y="-2" text-anchor="middle" style="font: inherit;opacity:0.5;">'+name+'</text>':'')+'<g id="layer1" transform="translate(1195.4,216.71)"><path style="fill:%COLOUR%;fill-opacity:1;fill-rule:evenodd;stroke:#ffffff;stroke-width:0.1;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" d="M 12.5 0.5 A 12 12 0 0 0 0.5 12.5 A 12 12 0 0 0 1.8047 17.939 L 1.8008 17.939 L 12.5 40.998 L 23.199 17.939 L 23.182 17.939 A 12 12 0 0 0 24.5 12.5 A 12 12 0 0 0 12.5 0.5 z " transform="matrix(1,0,0,1,-1195.4,-216.71)" id="path4147" /><ellipse style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.428;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" id="path4173" cx="-1182.9" cy="-204.47" rx="5.3848" ry="5.0002" /></g></svg>'.replace(/%COLOUR%/,colour||"#000000"),
+						'html':	('<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" width="25px" height="41px" viewBox="0 0 25 41" id="marker-'+id+'" version="1.1" style="overflow:visible">'+(name ? '<text x="12.5" y="-2" text-anchor="middle" style="font: inherit;opacity:0.5;">'+name+'</text>':'')+svgs[type]+'</svg>').replace(/%COLOUR%/,colour||"#000000"),
 						iconSize:	 [25, 41], // size of the icon
 						iconAnchor:	 [12.5, 41], // point of the icon which will correspond to marker's location
 						popupAnchor:	[0, -41] // point from which the popup should open relative to the iconAnchor
@@ -456,9 +464,10 @@ S(document).ready(function(){
 				//var bg = window.getComputedStyle(S('#_temp')[0]).backgroundColor;
 				//S('#_temp').remove();
 				this.markers = [];
+				
 				for(var c in this.counters){
 					if(this.counters[c].c){
-						this.markers.push(L.marker(this.counters[c].c,{icon: makeMarker(null,null,c),id:c,counter:this.counters[c]}).bindPopup('Test',{'minWidth':288}).addTo(this.map));
+						this.markers.push(L.marker(this.counters[c].c,{icon: makeMarker(this.counters[c].type,null,c),id:c,counter:this.counters[c]}).bindPopup('Test',{'minWidth':288}).addTo(this.map));
 						//changing the content on mouseover
 						this.markers[this.markers.length-1].on('click', function(m){
 							str = '<h3>'+this.options.counter.name+'</h3><p>'+this.options.counter.desc+'</p><ul>';
