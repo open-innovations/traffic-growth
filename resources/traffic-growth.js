@@ -1,11 +1,193 @@
 var counters;
-S(document).ready(function(){
+
+(function(root){
+
+	/* ============ */
+	/* Colours v0.3 */
+	// Define colour routines
+	function Colour(c,n){
+		if(!c) return {};
+
+		function d2h(d) { return ((d < 16) ? "0" : "")+d.toString(16);}
+		function h2d(h) {return parseInt(h,16);}
+		/**
+		 * Converts an RGB color value to HSV. Conversion formula
+		 * adapted from http://en.wikipedia.org/wiki/HSV_color_space.
+		 * Assumes r, g, and b are contained in the set [0, 255] and
+		 * returns h, s, and v in the set [0, 1].
+		 *
+		 * @param	Number  r		 The red color value
+		 * @param	Number  g		 The green color value
+		 * @param	Number  b		 The blue color value
+		 * @return  Array			  The HSV representation
+		 */
+		function rgb2hsv(r, g, b){
+			r = r/255;
+			g = g/255;
+			b = b/255;
+			var max = Math.max(r, g, b), min = Math.min(r, g, b);
+			var h, s, v = max;
+			var d = max - min;
+			s = max == 0 ? 0 : d / max;
+			if(max == min) h = 0; // achromatic
+			else{
+				switch(max){
+					case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+					case g: h = (b - r) / d + 2; break;
+					case b: h = (r - g) / d + 4; break;
+				}
+				h /= 6;
+			}
+			return [h, s, v];
+		}
+
+		this.alpha = 1;
+
+		// Let's deal with a variety of input
+		if(c.indexOf('#')==0){
+			this.hex = c;
+			this.rgb = [h2d(c.substring(1,3)),h2d(c.substring(3,5)),h2d(c.substring(5,7))];
+		}else if(c.indexOf('rgb')==0){
+			var bits = c.match(/[0-9\.]+/g);
+			if(bits.length == 4) this.alpha = parseFloat(bits[3]);
+			this.rgb = [parseInt(bits[0]),parseInt(bits[1]),parseInt(bits[2])];
+			this.hex = "#"+d2h(this.rgb[0])+d2h(this.rgb[1])+d2h(this.rgb[2]);
+		}else return {};
+		this.hsv = rgb2hsv(this.rgb[0],this.rgb[1],this.rgb[2]);
+		this.name = (n || "Name");
+		var r,sat;
+		for(r = 0, sat = 0; r < this.rgb.length ; r++){
+			if(this.rgb[r] > 200) sat++;
+		}
+		this.toString = function(){
+			return 'rgb'+(this.alpha < 1 ? 'a':'')+'('+this.rgb[0]+','+this.rgb[1]+','+this.rgb[2]+(this.alpha < 1 ? ','+this.alpha:'')+')'
+		}
+		this.text = (this.rgb[0] + this.rgb[1] + this.rgb[2] > 500 || sat > 1) ? "black" : "white";
+		return this;
+	}
+	function Colours(){
+		var scales = {
+			'Viridis': 'rgb(68,1,84) 0%, rgb(72,35,116) 10%, rgb(64,67,135) 20%, rgb(52,94,141) 30%, rgb(41,120,142) 40%, rgb(32,143,140) 50%, rgb(34,167,132) 60%, rgb(66,190,113) 70%, rgb(121,209,81) 80%, rgb(186,222,39) 90%, rgb(253,231,36) 100%',
+			'ODI': 'rgb(114,46,165) 0%, rgb(230,0,124) 50%, rgb(249,188,38) 100%',
+			'Heat': 'rgb(0,0,0) 0%, rgb(128,0,0) 25%, rgb(255,128,0) 50%, rgb(255,255,128) 75%, rgb(255,255,255) 100%',
+			'Planck': 'rgb(0,0,255) 0, rgb(0,112,255) 16.666%, rgb(0,221,255) 33.3333%, rgb(255,237,217) 50%, rgb(255,180,0) 66.666%, rgb(255,75,0) 100%',
+			'EPC': '#ef1c3a 1%, #ef1c3a 20.5%, #f78221 20.5%, #f78221 38.5%, #f9ac64 38.5%, #f9ac64 54.5%, #ffcc00 54.5%, #ffcc00 68.5%, #8cc63f 68.5%, #8cc63f 80.5%, #1bb35b 80.5%, #1bb35b 91.5%, #00855a 91.5%, #00855a 120%',
+			'Plasma': 'rgb(12,7,134) 0%, rgb(64,3,156) 10%, rgb(106,0,167) 20%, rgb(143,13,163) 30%, rgb(176,42,143) 40%, rgb(202,70,120) 50%, rgb(224,100,97) 60%, rgb(241,130,76) 70%, rgb(252,166,53) 80%, rgb(252,204,37) 90%, rgb(239,248,33) 100%',
+			'Referendum': '#4BACC6 0, #B6DDE8 50%, #FFF380 50%, #FFFF00 100%',
+			'Leodis': '#2254F4 0%, #F9BC26 50%, #ffffff 100%',
+			'Longside': '#801638 0%, #addde6 100%'
+		};
+		function col(a){
+			if(typeof a==="string") return new Colour(a);
+			else return a;
+		}
+		this.getColourPercent = function(pc,a,b){
+			pc /= 100;
+			a = col(a);
+			b = col(b);
+			return 'rgb'+(a.alpha<1 || b.alpha<1 ? 'a':'')+'('+parseInt(a.rgb[0] + (b.rgb[0]-a.rgb[0])*pc)+','+parseInt(a.rgb[1] + (b.rgb[1]-a.rgb[1])*pc)+','+parseInt(a.rgb[2] + (b.rgb[2]-a.rgb[2])*pc)+(a.alpha<1 || b.alpha<1 ? ','+((b.alpha-a.alpha)*pc):'')+')';
+		};
+		this.makeGradient = function(a,b){
+			a = col(a);
+			b = col(b);
+			return 'background: '+a.hex+'; background: -moz-linear-gradient(left, '+a.toString()+' 0%, '+b.toString()+' 100%);background: -webkit-linear-gradient(left, '+a.hex+' 0%,'+b.hex+' 100%);background: linear-gradient(to right, '+a.hex+' 0%,'+b.hex+' 100%);';
+		};
+		this.addScale = function(id,str){
+			scales[id] = str;
+			processScale(id,str);
+		}
+		function processScale(id,str){
+			if(scales[id] && scales[id].str){
+				console.warn('Colour scale '+id+' already exists. Bailing out.');
+				return this;
+			}
+			scales[id] = {'str':str};
+			scales[id].stops = extractColours(str);
+			return this;
+		}
+		function extractColours(str){
+			var stops,cs,i,c;
+			stops = str.replace(/^\s+/g,"").replace(/\s+$/g,"").replace(/\s\s/g," ").split(', ');
+			cs = [];
+			for(i = 0; i < stops.length; i++){
+				var bits = stops[i].split(/ /);
+				if(bits.length==2) cs.push({'v':bits[1],'c':new Colour(bits[0])});
+				else if(bits.length==1) cs.push({'c':new Colour(bits[0])});
+			}
+			
+			for(c=0; c < cs.length;c++){
+				if(cs[c].v){
+					// If a colour-stop has a percentage value provided, 
+					if(cs[c].v.indexOf('%')>=0) cs[c].aspercent = true;
+					cs[c].v = parseFloat(cs[c].v);
+				}
+			}
+			return cs;
+		}
+
+		// Process existing scales
+		for(var id in scales){
+			if(scales[id]) processScale(id,scales[id]);
+		}
+		
+		// Return a Colour object for a string
+		this.getColour = function(str){
+			return new Colour(str);
+		};
+		// Return the colour scale string
+		this.getColourScale = function(id){
+			return scales[id].str;
+		};
+		// Return the colour string for this scale, value and min/max
+		this.getColourFromScale = function(s,v,min,max){
+			var cs,v2,pc,c;
+			var colour = "";
+			if(!scales[s]){
+				console.warn('No colour scale '+s+' exists');
+				return '';
+			}
+			if(typeof min!=="number") min = 0;
+			if(typeof max!=="number") max = 1;
+			cs = scales[s].stops;
+			v2 = 100*(v-min)/(max-min);
+			
+			var match = -1;
+			if(v==max){
+				colour = 'rgba('+cs[cs.length-1].c.rgb[0]+', '+cs[cs.length-1].c.rgb[1]+', '+cs[cs.length-1].c.rgb[2]+', ' + cs[cs.length-1].c.alpha + ")";
+			}else{
+				if(cs.length == 1) colour = 'rgba('+cs[0].c.rgb[0]+', '+cs[0].c.rgb[1]+', '+cs[0].c.rgb[2]+', ' + (v2/100).toFixed(3) + ")";
+				else{
+					for(c = 0; c < cs.length-1; c++){
+						if(v2 >= cs[c].v && v2 <= cs[c+1].v){
+							// On this colour stop
+							pc = 100*(v2 - cs[c].v)/(cs[c+1].v-cs[c].v);
+							if(v2 >= max) pc = 100;	// Don't go above colour range
+							colour = this.getColourPercent(pc,cs[c].c,cs[c+1].c);
+							continue;
+						}
+					}
+				}
+			}
+	
+			return colour;	
+		};
+		
+		return this;
+	}
+
+	root.Colour = new Colours();
+
+
+})(window || this);
+
+(function(root){
+
+	var colours = ['c1-bg','c2-bg','c3-bg','c4-bg','c5-bg','c6-bg','c7-bg','c8-bg','c9-bg','c10-bg','c11-bg','c12-bg','c13-bg','c14-bg'];
+
 	function TrafficGrowth(){
 		el = S('#traffic');
 		this.selected = [];
 		this.counters = {};
-
-		var colours = ['c1-bg','c2-bg','c3-bg','c4-bg','c5-bg','c6-bg','c7-bg','c8-bg','c9-bg','c10-bg','c11-bg','c12-bg','c13-bg','c14-bg'];
 
 		// Do we update the address bar?
 		this.pushstate = !!(window.history && history.pushState);
@@ -14,7 +196,6 @@ S(document).ready(function(){
 		if(this.pushstate){
 			var _obj = this;
 			window[(this.pushstate) ? 'onpopstate' : 'onhashchange'] = function(e){
-				//console.log('popstate',e.state);
 				if(e && e.state){
 					_obj.selected = e.state.selected;
 					
@@ -162,8 +343,6 @@ S(document).ready(function(){
 				// Select this counter/lane
 				this.counters[idx[0]].lanes[idx[1]].selected = true;
 				
-				//console.log(this.counters[idx[0]].lanes[idx[1]]);
-
 				S().ajax('data/'+this.counters[idx[0]].lanes[idx[1]].file,{
 					'dataType': 'text',
 					'this': this,
@@ -187,13 +366,11 @@ S(document).ready(function(){
 			// Update the history
 			str = "";
 			for(var i = 0; i < this.selected.length; i++) str += (str ? ';':'')+this.selected[i].sensor+":"+this.selected[i].lane;
-			
-			//console.log('pushState');
+
 			if(this.pushstate) history.pushState({selected:this.selected},"Traffic Growth",'?'+str);
 		}
 		
 		this.addCounterToMap = function(sensor,lane){
-			//console.log('addCounter',sensor,lane);
 			this.selectCounter([sensor,lane],function(idx){
 				this.display();
 				this.updateHistory();
@@ -242,11 +419,15 @@ S(document).ready(function(){
 		// Function to update the DOM with the charts
 		this.display = function(){
 
-			var c,code,n,idx,a;
-			
+			var c,code,n,idx,a,iso,ds,de,dailydone,min,max,pos,data,dow,month;
+
+			// Create data arrays
+			data = {'hourly':[],'dow':[],'monthly':[],'yearly':[],'daily':new Array(this.selected.length)};
+			dow = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+			month = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
 			// Reset
 			el.find('.output').html('');
-
 
 			// Update tag list
 			html = '<ul class="tags">';
@@ -269,9 +450,8 @@ S(document).ready(function(){
 
 			if(this.selected.length==0) return this;
 
-
-			var min = "3000-12-01";
-			var max = "0001-01-01";
+			min = "3000-12-01";
+			max = "0001-01-01";
 
 			for(a in this.counters){
 				haslane = false;
@@ -291,37 +471,35 @@ S(document).ready(function(){
 				this.setMarker(a);
 			}
 
-			var ds = new Date(min);
-			var de = new Date(max);
+			ds = new Date(min);
+			de = new Date(max);
 			
 			if(min == "3000-12-01") console.warn('Counter data seems to be lacking dates',this.counters,min,max,this.selected);
 
-			html = '<h2>Counts by hour of day ('+ds.toISOString().substr(0,10)+' &rarr; '+de.toISOString().substr(0,10)+')</h2><div id="barchart-hourly"></div><h2>Counts by day of week ('+ds.toISOString().substr(0,10)+' &rarr; '+de.toISOString().substr(0,10)+')</h2><div id="barchart-dow"></div><h2>Counts by month ('+ds.toISOString().substr(0,10)+' &rarr; '+de.toISOString().substr(0,10)+')</h2><div id="barchart-monthly"></div><h2>Counts by year ('+ds.toISOString().substr(0,10)+' &rarr; '+de.toISOString().substr(0,10)+')</h2><div id="barchart-yearly"></div>';
+			html = '<div id="calendar-view"></div><h2>Counts by hour of day ('+ds.toISOString().substr(0,10)+' &rarr; '+de.toISOString().substr(0,10)+')</h2><div id="barchart-hourly"></div><h2>Counts by day of week ('+ds.toISOString().substr(0,10)+' &rarr; '+de.toISOString().substr(0,10)+')</h2><div id="barchart-dow"></div><h2>Counts by month ('+ds.toISOString().substr(0,10)+' &rarr; '+de.toISOString().substr(0,10)+')</h2><div id="barchart-monthly"></div><h2>Counts by year ('+ds.toISOString().substr(0,10)+' &rarr; '+de.toISOString().substr(0,10)+')</h2><div id="barchart-yearly"></div>';
 			if(el.find('.charts').length==0) el.find('.output').append('<div class="charts">'+html+'</div>');
 			else el.find('.charts').html(html);
-
-
-
-			// Create data arrays
-			var data = {'hourly':[],'dow':[],'monthly':[],'yearly':[]};
-			var dow = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-			var month = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 			for(h = 0; h < 24; h++) data.hourly.push([(h<10 ? "0":"")+h+":00",new Array(this.selected.length)]);
 			for(d = 0; d < 7; d++) data.dow.push([dow[d],new Array(this.selected.length)]);
 			for(m = 0; m < 12; m++) data.monthly.push([month[m],new Array(this.selected.length)]);
 			for(y = ds.getUTCFullYear(); y <= de.getUTCFullYear(); y++) data.yearly.push([y+"",new Array(this.selected.length)]);
-			
 
+			// To avoid including the same day twicee
+			
 			for(c = 0; c < this.selected.length; c++){
+				dailydone = {};
 				idx = [this.selected[c].sensor,this.selected[c].lane];
 				for(h = 0; h < 24; h++) data.hourly[h][1][c] = 0;
 				for(d = 0; d < 7; d++) data.dow[d][1][c] = 0;
 				for(m = 0; m < 12; m++) data.monthly[m][1][c] = 0;
 				for(y = 0; y < data.yearly.length; y++) data.yearly[y][1][c] = 0;
+				data.daily[c] = {'label':this.getSensorLabel(this.selected[c].sensor,this.selected[c].lane),'days':{}};
 				if(this.counters[idx[0]].lanes[idx[1]].data){
 					for(var i = 0; i < this.counters[idx[0]].lanes[idx[1]].data.rows.length; i++){
 						d = new Date(this.counters[idx[0]].lanes[idx[1]].data.rows[i][0]);
+						iso = d.toISOString().substr(0,10);
+						if(!data.daily[c].days[iso]) data.daily[c].days[iso] = 0;
 						t = 0;
 						for(h = 0; h < 24; h++){
 							n = this.counters[idx[0]].lanes[idx[1]].data.rows[i][h+1];
@@ -332,6 +510,10 @@ S(document).ready(function(){
 									t += n;
 								}
 							}
+						}
+						if(!dailydone[iso]){
+							data.daily[c].days[iso] += t;
+							dailydone[iso] = true;
 						}
 						data.dow[(d.getDay()+6) % 7][1][c] += t;	// Shift day-of-week from Sunday start to Monday start
 						data.monthly[d.getMonth()][1][c] += t;
@@ -359,6 +541,8 @@ S(document).ready(function(){
 					return (colours[c])+cls;
 				}else return cls;
 			}
+
+			var calendar = new CalendarMap(data.daily,{'start':ds,'end':de});
 
 			var chart = {};
 			function buildArray(bins){
@@ -519,6 +703,156 @@ S(document).ready(function(){
 
 		return this;
 	}
+	root.TrafficGrowth = TrafficGrowth;
+
+	// Create a "Calendar Heat Map" view
+	function CalendarMap(data,opts){
+
+		this.setOptions = function(opts){
+			if(!opts) opts = {};
+			if(!opts.start) opts.start = new Date();
+			if(!opts.end) opts.end = new Date();
+			if(!opts.id) opts.id = 'calendar-view';
+			this.opts = opts;
+			return this;
+		}
+		this.setData = function(data){
+			var i,iso,s,e;
+
+			this.data = data;
+
+			s = this.opts.start;
+			e = this.opts.end;
+			
+			s.setDate(1);
+			s.setMonth(0);
+			s.setHours(12);
+			e.setDate(1);
+			e.setMonth(11);
+			e.setDate(31);
+			e.setHours(12);
+
+			this.calendar = [];
+
+			for(i = 0; i < data.length; i++){
+				this.calendar[i] = {'days':{}};
+				for(iso in data[i].days){
+					if(data[i].days[iso]){
+						this.calendar[i].days[iso] = {'date':new Date(iso),'total':data[i].days[iso]};
+					}
+				}
+			}
+
+			this.start = s;
+			this.end = e;
+
+			return this;
+		}
+		
+		function getCSSPropertyFromClass(cls,prop){
+			var el = document.createElement('div');
+			el.className = cls;
+			el.innerHTML = "Test";
+			document.body.appendChild(el);
+			rtn = window.getComputedStyle(el,null).getPropertyValue(prop);
+			el.parentNode.removeChild(el);
+			return rtn;
+		}	
+		this.draw = function(){
+
+			if(!this.calendar) return this;
+
+			var cal,i,html,curryear,changeday,mx,weeklabels,d,sday,oldy,scale,a,b,c;
+			html = '';
+			weeklabels = '	<div class="week"><div class="day"><span>M</span></div><div class="day"><span>T</span></div><div class="day"><span>W</span></div><div class="day"><span>T</span></div><div class="day"><span>F</span></div><div class="day"><span>S</span></div><div class="day"><span>S</span></div></div>';
+			//Colour.addScale('Heat2','#222222 0%, rgb(128,0,0) 25%, rgb(255,128,0) 50%, rgb(255,255,128) 75%, rgb(255,255,255) 100%');
+			scale = 'Viridis';
+
+			// Loop over calendars
+
+			for(cal = 0 ; cal < this.calendar.length; cal++){
+
+				// Calculate the range
+				mx = 0;
+				for(d in this.calendar[cal].days){
+					if(this.calendar[cal].days[d].total > mx) mx = this.calendar[cal].days[d].total;
+				}
+				// Set the colour scale
+				a = Colour.getColourFromScale(scale,0,0,mx);
+				b = Colour.getColourFromScale(scale,mx,0,mx);
+
+				curryear = {'body':'','title':this.start.getFullYear()};
+				changeday = 1;
+				html += '<section class="calendar padded-bottom" style="border:8px solid '+getCSSPropertyFromClass(colours[cal],'background-color')+';border-top:0;"><div class="'+colours[cal]+' padded"><h2>'+this.data[cal].label+'</h2></div><div class="padded"><div class="scalebar"><div class="lower">0</div><div class="upper">'+formatNumber(mx)+'</div></div>';
+				curryear.body += weeklabels;
+				curryear.body += '	<div class="week">';
+				sday = this.start.getDay()-1;
+				if(sday < 0) sday += 7;
+				for(d = 0; d < sday; d++) curryear.body += '		<div class="day"></div>';
+
+
+				oldy = -1;
+				
+				var years = new Array();
+				
+				d = new Date(this.start);
+				
+				while(d.getTime() <= this.end.getTime()){
+					v = 0;
+					iso = d.toISOString().substr(0,10);
+					if(d.getDay()==changeday) curryear.body += '</div><div class="week">'
+					if(oldy > 0 && d.getYear()!=oldy){
+						years.push(curryear);
+						curryear = {'body':'','title':d.getFullYear()};
+						curryear.body += weeklabels;
+						curryear.body += '<div class="week">';
+						var sday = d.getDay()-1;
+						if(sday < 0) sday += 7;
+						for(var da = 0; da < sday; da++) curryear.body += '		<div class="day"></div>';
+					}
+
+					if(this.calendar[cal].days[iso]) v = this.calendar[cal].days[iso].total;
+					
+					curryear.body += '		<div class="day" style="background-color:'+(this.calendar[cal].days[iso] ? Colour.getColourFromScale(scale,v,0,mx) : 'transparent')+'"'+(this.calendar[cal].days[iso] ? ' title="'+iso+': '+formatNumber(v,"")+'"':'')+' data-iso="'+iso+'">'+(this.calendar[iso] ? '' : '')+'</div>';
+					oldy = d.getYear();
+					d.setDate(d.getDate()+1);
+				}
+				years.push(curryear);
+				
+				for(var y = years.length-1; y >= 0; y--){
+					if(y < years.length-1) html += '</div>';
+					html += '	<h4>'+years[y].title+'</h4>';
+					html += '<div class="year">'+years[y].body+'</div>';
+				}
+				html += '</div></div></section>';
+				
+			}
+
+			// Add the generated calendar to the page
+			S('#'+this.opts.id).html(html);
+			grad = 	Colour.getColourScale(scale);
+			S('.scalebar').attr('style','height: 1em;width:100%;background:-moz-linear-gradient(left, '+grad+');background: -webkit-linear-gradient(left,'+grad+');background: linear-gradient(to right,'+grad+')');
+
+			// Add events to every day
+			S('.day').on('mouseover',function(e){
+				S('.indicator').remove();
+				var el = S(e.currentTarget);
+				var iso = el[0].getAttribute('data-iso');
+				var cls = (iso && parseInt(iso.substr(5,2)) > 6) ? ' indicator-right':'';
+				if(el.attr('title')) el.append('<div class="indicator'+cls+'"><div class="handle"></div><div class="values">'+el.attr('title')+' counts</div></div>');
+			});
+
+			return this;
+		}
+
+		this.setOptions(opts);
+		this.setData(data);
+		this.draw();
+
+		return this;
+	}
+	root.CalendarMap = CalendarMap;
+
 	/**
 	 * CSVToArray parses any String of Data including '\r' '\n' characters,
 	 * and returns an array with the rows of data.
@@ -697,5 +1031,9 @@ S(document).ready(function(){
 		var object = JSON.parse(json);
 		return object;
 	}
-	counters = new TrafficGrowth();
-});
+	
+	S(document).ready(function(){
+		counters = new TrafficGrowth();
+	});
+
+})(window || this);
