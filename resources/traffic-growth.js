@@ -431,14 +431,33 @@ var counters;
 
 			// Update tag list
 			html = '<ul class="tags">';
+			pos = {'e':180,'w':-180,'n':-90,'s':90};
 			for(c = 0; c < this.selected.length; c++){
 				idx = [this.selected[c].sensor,this.selected[c].lane];
+				pos.n = Math.max(pos.n,this.counters[this.selected[c].sensor].c[0]);
+				pos.s = Math.min(pos.s,this.counters[this.selected[c].sensor].c[0]);
+				pos.e = Math.min(pos.e,this.counters[this.selected[c].sensor].c[1]);
+				pos.w = Math.max(pos.w,this.counters[this.selected[c].sensor].c[1]);
 				n = this.selected[c].colour;
 				html += '<li class="select-'+idx[0]+'-'+idx[1]+'"><div class="tag '+colours[n]+'" title="'+this.counters[idx[0]].name+'">'+this.getSensorLabel(idx[0],idx[1])+'<a href="#" class="close" title="Remove '+this.counters[idx[0]].name+'" data-sensor="'+idx[0]+'" data-lane="'+idx[1]+'">&times;</a></div></li>';
 			}
 			html += '</ul>';
 			if(el.find('.tags').length==0) el.find('.output').append(html);
 			else el.find('.tags').html(html);
+
+
+			// Fit map
+			if(this.map){
+				if(pos.n==pos.s && pos.e==pos.w){
+					this.map.setView([pos.n,pos.e],18);
+				}else{
+					this.map.fitBounds([
+						[pos.s, pos.w],
+						[pos.n, pos.e]
+					],{'padding':[32,32]});					
+				}
+			}
+
 
 
 			// Add events 
