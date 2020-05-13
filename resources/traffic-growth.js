@@ -449,7 +449,7 @@ var counters;
 			// Fit map
 			if(this.map){
 				if(pos.n==pos.s && pos.e==pos.w){
-					this.map.setView([pos.n,pos.e],18);
+					this.map.setView([pos.n,pos.e],17);
 				}else{
 					this.map.fitBounds([
 						[pos.s, pos.w],
