@@ -680,7 +680,7 @@ S(document).ready(function(){
 	function formatNumber(v){
 		if(typeof v !== "number") return v;
 		if(v > 1e7) return Math.round(v/1e6)+"M";
-		if(v > 1e6) return (v/1e6).toFixed(1)+"M";
+		if(v > 1e6) return (v/1e6).toFixed(1).replace('.0','')+"M";
 		if(v >= 1e3) return (v/1e3).toFixed(1).replace('.0','')+'k';
 		return v;
 	}
