@@ -754,9 +754,11 @@ var counters;
 			this.calendar = [];
 
 			for(i = 0; i < data.length; i++){
-				this.calendar[i] = {'days':{}};
+				this.calendar[i] = {'days':{},'start':'3000-01-01','end':'0000-01-01'};
 				for(iso in data[i].days){
 					if(data[i].days[iso]){
+						if(iso < this.calendar[i].start) this.calendar[i].start = iso;
+						if(iso > this.calendar[i].end) this.calendar[i].end = iso;
 						this.calendar[i].days[iso] = {'date':new Date(iso),'total':data[i].days[iso]};
 					}
 				}
@@ -781,15 +783,24 @@ var counters;
 
 			if(!this.calendar) return this;
 
-			var cal,i,html,curryear,changeday,mx,weeklabels,d,sday,oldy,scale,a,b,c;
+			var cal,i,html,curryear,changeday,mx,weeklabels,d,sday,oldy,scale,a,b,c,start,end,s,e;
 			html = '';
 			weeklabels = '	<div class="week"><div class="day"><span>M</span></div><div class="day"><span>T</span></div><div class="day"><span>W</span></div><div class="day"><span>T</span></div><div class="day"><span>F</span></div><div class="day"><span>S</span></div><div class="day"><span>S</span></div></div>';
 			//Colour.addScale('Heat2','#222222 0%, rgb(128,0,0) 25%, rgb(255,128,0) 50%, rgb(255,255,128) 75%, rgb(255,255,255) 100%');
 			scale = 'Viridis';
 
 			// Loop over calendars
-
 			for(cal = 0 ; cal < this.calendar.length; cal++){
+
+				s = new Date(this.calendar[cal].start);
+				e = new Date(this.calendar[cal].end);
+				s.setDate(1);
+				s.setMonth(0);
+				s.setHours(12);
+				e.setDate(1);
+				e.setMonth(11);
+				e.setDate(31);
+				e.setHours(12);
 
 				// Calculate the range
 				mx = 0;
@@ -800,12 +811,12 @@ var counters;
 				a = Colour.getColourFromScale(scale,0,0,mx);
 				b = Colour.getColourFromScale(scale,mx,0,mx);
 
-				curryear = {'body':'','title':this.start.getFullYear()};
+				curryear = {'body':'','title':s.getFullYear()};
 				changeday = 1;
 				html += '<section class="calendar padded-bottom" style="border:8px solid '+getCSSPropertyFromClass(colours[cal],'background-color')+';border-top:0;"><div class="'+colours[cal]+' padded"><h2>'+this.data[cal].label+'</h2></div><div class="padded"><div class="scalebar"><div class="lower">0</div><div class="upper">'+formatNumber(mx)+'</div></div>';
 				curryear.body += weeklabels;
 				curryear.body += '	<div class="week">';
-				sday = this.start.getDay()-1;
+				sday = s.getDay()-1;
 				if(sday < 0) sday += 7;
 				for(d = 0; d < sday; d++) curryear.body += '		<div class="day"></div>';
 
@@ -814,9 +825,9 @@ var counters;
 				
 				var years = new Array();
 				
-				d = new Date(this.start);
+				d = new Date(s);
 				
-				while(d.getTime() <= this.end.getTime()){
+				while(d.getTime() <= e.getTime()){
 					v = 0;
 					iso = d.toISOString().substr(0,10);
 					if(d.getDay()==changeday) curryear.body += '</div><div class="week">'
