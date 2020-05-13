@@ -348,6 +348,11 @@ S(document).ready(function(){
 				d = new Date(key);
 				d = d.getUTCDay();
 				cls = "";
+				for(var i = 0; i < this.data.length; i++){
+					if(this.data[i][0]==key){
+						if(i > this.data.length/2) cls = " bar-right";
+					}
+				}				
 				if(typeof series==="number"){
 					idx = _obj.selected[series];
 					c = _obj.selected[series].colour;
@@ -676,7 +681,7 @@ S(document).ready(function(){
 		if(typeof v !== "number") return v;
 		if(v > 1e7) return Math.round(v/1e6)+"M";
 		if(v > 1e6) return (v/1e6).toFixed(1)+"M";
-		if(v >= 1e3) return v.toLocaleString();
+		if(v >= 1e3) return (v/1e3).toFixed(1).replace('.0','')+'k';
 		return v;
 	}
 	// Sort the data
