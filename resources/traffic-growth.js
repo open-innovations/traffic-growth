@@ -338,12 +338,14 @@ var counters;
 					console.warn('Unable to find counter', this.counters,idx);
 					return this;
 				}
-				if(typeof this.counters[idx[0]].lanes[idx[1]].file!=="string") this.counters[idx[0]].lanes[idx[1]].file = bits[0]+'/'+bits[1]+'-'+bits[2]+'-'+idx[1]+'.csv';
+
+				// Use a remote URL
+				if(typeof this.counters[idx[0]].lanes[idx[1]].file!=="string") this.counters[idx[0]].lanes[idx[1]].file = 'data/'+bits[0]+'/'+bits[1]+'-'+bits[2]+'-'+idx[1]+'.csv';
 
 				// Select this counter/lane
 				this.counters[idx[0]].lanes[idx[1]].selected = true;
-				
-				S().ajax('data/'+this.counters[idx[0]].lanes[idx[1]].file,{
+
+				S().ajax(this.counters[idx[0]].lanes[idx[1]].file,{
 					'dataType': 'text',
 					'this': this,
 					'cache': false,
@@ -504,7 +506,9 @@ var counters;
 			for(m = 0; m < 12; m++) data.monthly.push([month[m],new Array(this.selected.length)]);
 			for(y = ds.getUTCFullYear(); y <= de.getUTCFullYear(); y++) data.yearly.push([y+"",new Array(this.selected.length)]);
 
-			// To avoid including the same day twicee
+			var datasources = '';
+
+			// To avoid including the same day twice
 			
 			for(c = 0; c < this.selected.length; c++){
 				dailydone = {};
@@ -515,6 +519,7 @@ var counters;
 				for(y = 0; y < data.yearly.length; y++) data.yearly[y][1][c] = 0;
 				data.daily[c] = {'label':this.getSensorLabel(this.selected[c].sensor,this.selected[c].lane),'days':{}};
 				if(this.counters[idx[0]].lanes[idx[1]].data){
+					datasources += '<li><a href="'+this.counters[idx[0]].lanes[idx[1]].file+'">'+this.getSensorLabel(this.selected[c].sensor,this.selected[c].lane)+' processed data</a> (derived from above)</li>';
 					for(var i = 0; i < this.counters[idx[0]].lanes[idx[1]].data.rows.length; i++){
 						d = new Date(this.counters[idx[0]].lanes[idx[1]].data.rows[i][0]);
 						iso = d.toISOString().substr(0,10);
@@ -649,6 +654,8 @@ var counters;
 			});
 			// Set the data, bins and draw
 			chart.yearly.setData(data.yearly).setBins({}).draw();
+
+			S('#source-data').html(datasources);
 
 			return this;
 		}

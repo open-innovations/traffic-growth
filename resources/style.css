@@ -357,6 +357,9 @@ ul.files a.file-doc:before { background-image: url('/resources/images/filetypes/
 ul.files a.file-csv:before { background-image: url('/resources/images/filetypes/csv.svg'); }
 ul.files a.file-xls:before { background-image: url('/resources/images/filetypes/xls.svg'); }
 
+#main .data-source { margin-bottom: 0; }
+
+
 @media only screen and (max-width: 1120px) {
 	footer ul.sponsors .sponsor { width: 100%; margin: 0; }
 	footer ul.sponsors li { width: 20% }
