@@ -80,7 +80,7 @@ foreach $sensor (sort(keys(%sensors))){
 	#$sensorlane{$s} .= "\"$lane\":{\"start\":\"$datetimes[0]\",\"period\":$sensors{$sensor}{'period'},\"b\":".(-s $file)."}";
 
 	# Save each lane with its start time and size in bytes
-	$sensorlane{$s} .= "\"$lane\":{\"start\":\"$datetimes[0]\",\"b\":".(-s $file).",\"title\":\"".($sitedata{$s}{'lanes'}{$lane}{'description'}||")."\"}";
+	$sensorlane{$s} .= "\"$lane\":{\"start\":\"$datetimes[0]\",\"b\":".(-s $file).",\"title\":\"".($sitedata{$s}{'lanes'}{$lane}{'description'}||"")."\"}";
 
 }
 
