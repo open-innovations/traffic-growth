@@ -460,16 +460,12 @@ var counters;
 				if(pos.n==pos.s && pos.e==pos.w){
 					this.map.setView([pos.n,pos.e],15);
 				}else{
-					if(pos.e==180 && pos.w==-180){
-						lat = _lat;
-						lon = _lon;
-						d = _d;
-						pos = {'s':lat-d,'n':lat+d,'w':lon-d,'e':lon+d};
+					if(pos.e!=180 && pos.w!=-180){
+						this.map.fitBounds([
+							[pos.s, pos.w],
+							[pos.n, pos.e]
+						],{'padding':[32,32]});
 					}
-					this.map.fitBounds([
-						[pos.s, pos.w],
-						[pos.n, pos.e]
-					],{'padding':[32,32]});					
 				}
 			}
 
