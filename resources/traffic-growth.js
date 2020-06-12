@@ -183,6 +183,9 @@ var counters;
 (function(root){
 
 	var colours = ['c1-bg','c2-bg','c3-bg','c4-bg','c5-bg','c6-bg','c7-bg','c8-bg','c9-bg','c10-bg','c11-bg','c12-bg','c13-bg','c14-bg'];
+	var _lat = 53.85;
+	var _lon = -1.45;
+	var _d = 0.2;
 
 	function TrafficGrowth(){
 		el = S('#traffic');
@@ -457,6 +460,12 @@ var counters;
 				if(pos.n==pos.s && pos.e==pos.w){
 					this.map.setView([pos.n,pos.e],17);
 				}else{
+					if(pos.e==180 && pos.w==-180){
+						lat = _lat;
+						lon = _lon;
+						d = _d;
+						pos = {'s':lat-d,'n':lat+d,'w':lon-d,'e':lon+d};
+					}
 					this.map.fitBounds([
 						[pos.s, pos.w],
 						[pos.n, pos.e]
@@ -666,9 +675,9 @@ var counters;
 		
 		this.buildMap = function(){
 			if(!this.map){
-				lat = 53.85;
-				lon = -1.45;
-				d = 0.20;
+				lat = _lat;
+				lon = _lon;
+				d = _d;
 			
 				this.baseMaps = {
 					'Default':  L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
