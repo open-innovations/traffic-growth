@@ -436,10 +436,14 @@ var counters;
 			pos = {'e':180,'w':-180,'n':-90,'s':90};
 			for(c = 0; c < this.selected.length; c++){
 				idx = [this.selected[c].sensor,this.selected[c].lane];
-				pos.n = Math.max(pos.n,this.counters[this.selected[c].sensor].c[0]);
-				pos.s = Math.min(pos.s,this.counters[this.selected[c].sensor].c[0]);
-				pos.e = Math.min(pos.e,this.counters[this.selected[c].sensor].c[1]);
-				pos.w = Math.max(pos.w,this.counters[this.selected[c].sensor].c[1]);
+				if(!!this.counters[this.selected[c].sensor].c[0] && !!this.counters[this.selected[c].sensor].c[1]){
+					pos.n = Math.max(pos.n,this.counters[this.selected[c].sensor].c[0]);
+					pos.s = Math.min(pos.s,this.counters[this.selected[c].sensor].c[0]);
+					pos.e = Math.min(pos.e,this.counters[this.selected[c].sensor].c[1]);
+					pos.w = Math.max(pos.w,this.counters[this.selected[c].sensor].c[1]);
+				}else{
+					console.error('No coordinates for '+this.selected[c].sensor,this.counters[this.selected[c].sensor]);
+				}
 				n = this.selected[c].colour;
 				html += '<li class="select-'+idx[0]+'-'+idx[1]+'"><div class="tag '+colours[n]+'" title="'+this.counters[idx[0]].name+'">'+this.getSensorLabel(idx[0],idx[1])+'<a href="#" class="close" title="Remove '+this.counters[idx[0]].name+'" data-sensor="'+idx[0]+'" data-lane="'+idx[1]+'">&times;</a></div></li>';
 			}
@@ -703,22 +707,26 @@ var counters;
 				
 				for(var c in this.counters){
 					if(this.counters[c].c){
-						this.markers.push(L.marker(this.counters[c].c,{icon: makeMarker(this.counters[c].type,null,c),id:c,counter:this.counters[c]}).bindPopup('Test',{'minWidth':288}).addTo(this.map));
-						//changing the content on mouseover
-						this.markers[this.markers.length-1].on('click', function(m){
-							str = '<h3>'+this.options.counter.name+'</h3><p>'+this.options.counter.desc+'</p><ul>';
-							for(var l in this.options.counter.lanes){
-								str += '<li><a href="#" class="button seasonal-accent" data-id="'+l+'">&plus; '+(this.options.counter.lanes[l].title ? this.options.counter.lanes[l].title : 'Lane '+l)+'</a></li>';
-							}
-							this._popup.setContent('<div id="popup-'+this.options.id+'">'+str+'</ul></div>');
-							// Add events to buttons 
-							S(this._popup._container).find('a.button').on('click',{options:this.options},function(e){
-								e.preventDefault();
-								e.stopPropagation();
-								_obj.addCounterToMap(e.data.options.id,e.currentTarget.getAttribute('data-id'));
-								e.currentTarget.blur();
+						if(!!this.counters[c].c[0] && !!this.counters[c].c[1]){
+							this.markers.push(L.marker(this.counters[c].c,{icon: makeMarker(this.counters[c].type,null,c),id:c,counter:this.counters[c]}).bindPopup('Test',{'minWidth':288}).addTo(this.map));
+							//changing the content on mouseover
+							this.markers[this.markers.length-1].on('click', function(m){
+								str = '<h3>'+this.options.counter.name+'</h3><p>'+this.options.counter.desc+'</p><ul>';
+								for(var l in this.options.counter.lanes){
+									str += '<li><a href="#" class="button seasonal-accent" data-id="'+l+'">&plus; '+(this.options.counter.lanes[l].title ? this.options.counter.lanes[l].title : 'Lane '+l)+'</a></li>';
+								}
+								this._popup.setContent('<div id="popup-'+this.options.id+'">'+str+'</ul></div>');
+								// Add events to buttons 
+								S(this._popup._container).find('a.button').on('click',{options:this.options},function(e){
+									e.preventDefault();
+									e.stopPropagation();
+									_obj.addCounterToMap(e.data.options.id,e.currentTarget.getAttribute('data-id'));
+									e.currentTarget.blur();
+								});
 							});
-						});
+						}else{
+							console.error('Unable to add '+c+' without coordinates');
+						}
 					}
 				}
 				var _obj = this;
