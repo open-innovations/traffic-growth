@@ -458,7 +458,7 @@ var counters;
 			// Fit map
 			if(this.map){
 				if(pos.n==pos.s && pos.e==pos.w){
-					this.map.setView([pos.n,pos.e],17);
+					this.map.setView([pos.n,pos.e],15);
 				}else{
 					if(pos.e==180 && pos.w==-180){
 						lat = _lat;
