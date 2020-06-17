@@ -282,6 +282,12 @@
 				</ul>
 				<ul class="data-source" id="source-data">
 				</ul>
+				<h2>Processing and code</h2>
+				<p>Local Authorities tend to publish large, time-period-based, files that each contain data for all their counters during that time e.g. Leeds publish cycle counts by year and the 2019 data file was over 34MB. Those sizes are impractical for web-based visualisations such as this so we have created <a href="https://github.com/odileeds/traffic-growth/tree/master/data">processed data files</a> with one counter per file. In each file, the counts are arranged with one row per day and one column per hour interval; <a href="https://github.com/odileeds/traffic-growth/blob/master/data/leeds/cycle-100122-1.csv">a counter with 8 years of hourly data</a> becomes around 100kB.</p>
+ 				<p>The <a href="https://github.com/odileeds/traffic-growth">code for this visualisation</a> is published on Github under an MIT licence.</p>
+				<h2>Get involved</h2>
+				<p>If you publish foot/cycle/vehicle count data and would like to have it included in this tool, <a href="https://twitter.com/ODILeeds">get in touch with @ODILeeds</a>. This visualisation allows for a distributed publishing approach so you can publish files (in our CSV format) on your own server. You would then create <a href="https://github.com/odileeds/traffic-growth/blob/master/data/index-cycle.json">a JSON index file</a> with metadata about each of your counters.</p>
+
 			</div>	
 		</div>
 	</div>
