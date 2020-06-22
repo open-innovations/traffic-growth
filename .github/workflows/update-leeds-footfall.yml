@@ -4,8 +4,8 @@
 name: Update Leeds footfall data
 
 on:
-  push:
-    branches: [ master ]
+  schedule:
+    - cron: 0 17 * * 1,3,5
 
 jobs:
   build:
