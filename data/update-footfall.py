@@ -59,3 +59,5 @@ for k,v in index.items():
       existing = existing.append(new_row, ignore_index=True)
   existing.sort_values(by='Date', inplace=True)
   existing.to_csv(filename, index=False, date_format=ISO_DATE_FORMAT)
+new_last_date = existing.tail(n=1).Date.values[0]
+print(str(new_last_date)[:10])
