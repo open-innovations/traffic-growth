@@ -1,11 +1,11 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: Python application
+name: Update Leeds footfall data
 
 on:
-  schedule:
-    - cron: 36 10 * * *
+  push:
+    branches: [ master ]
 
 jobs:
   build:
@@ -22,9 +22,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r data/requirements.txt
-    - name: Run update script and commit changes
+    - name: Run update script
+      run: python data/update-footfall.py
+    - name: Commit changes
       run: |
-        python data/update-footfall.py
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
         git add .
         git commit -m "Update Leeds footfall data" || exit 0
     - name: Push changes
