@@ -23,6 +23,7 @@ push(@rtn,getPackage("https://data.yorkopendata.org/api/3/action/package_show?id
 print "Processing data files\n";
 for($f = 0; $f < @rtn ; $f++){
 	$dir = $rtn[$f]{'dir'};
+	$tmp = $rtn[$f]{'tmp'};
 	$prefix = $rtn[$f]{'prefix'};
 	print "$rtn[$f]{'prefix'} - $rtn[$f]{'file'}\n";
 	open(CSV,$rtn[$f]{'file'});
@@ -74,7 +75,13 @@ for($f = 0; $f < @rtn ; $f++){
 
 				$period = 0;
 				if(!$sensors{$sensor}){
-					$sensors{$sensor} = {'values'=>{}};
+					$sensors{$sensor} = {'file'=>"$tmp$sensor.dat"};
+					if(-e $sensors{$sensor}{'file'}){
+						`rm $sensors{$sensor}{'file'}`;
+					}
+					`touch $sensors{$sensor}{'file'}`;
+					# Open the file handle
+					open($sensors{$sensor}{'fh'},">>",$sensors{$sensor}{'file'});
 				}
 
 
@@ -100,16 +107,17 @@ for($f = 0; $f < @rtn ; $f++){
 				}
 				for($hh = $h1; $hh < $h2; $hh++){
 					$datestamp = $date."T".sprintf("%02d",int($hh)).":".sprintf("%02d",int(($hh - int($hh))*60))."Z";
-					$sensors{$sensor}{'values'}{$datestamp} = {'value'=>0,'period'=>$period};
+					$p = $period;
 					if($rtn[$f]{'yearly'}{'count'} && $h{$rtn[$f]{'yearly'}{'count'}} ne ""){
 						$c = $cols[$h{$rtn[$f]{'yearly'}{'count'}}];
 						if($period/60 > 1){
 							$c = sprintf("%.1f",$c/($period/60));
 							# Update period
-							$sensors{$sensor}{'values'}{$datestamp}{'period'} = 60;
+							$p = 60;
 						}
-						$sensors{$sensor}{'values'}{$datestamp}{'value'} = $c;
 					}
+					$fh = $sensors{$sensor}{'fh'};
+					print $fh "$datestamp\t$c\t$p\n";
 				}
 			}
 		}
@@ -119,6 +127,11 @@ for($f = 0; $f < @rtn ; $f++){
 
 }
 
+# Close the filehandles
+print "Closing files\n";
+foreach $sensor (sort(keys(%sensors))){
+	close($sensors{$sensor}{'fh'});
+}
 
 
 # Save each sensor
@@ -126,14 +139,23 @@ print "Saving each sensor\n";
 foreach $sensor (sort(keys(%sensors))){
 	($dir,$prefix,$id,$lane) = split(/\-/,$sensor);
 
-	print "$sensor\n";
-	@datetimes = sort(keys(%{$sensors{$sensor}{'values'}}));
+	print "Reading $sensor from $sensors{$sensor}{'file'}\n";
+	open(FILE,$sensors{$sensor}{'file'});
+	@lines = <FILE>;
+	close(FILE);
+
+	%values = ();
+	@datetimes = ();
 	%dts = ();
 	@dates = "";
-	for $d (@datetimes){
+	for($i = 0; $i < @lines ; $i++){
+		($d,$v,$p) = split(/\t/,$lines[$i]);
+		$values{$d} = {'value'=>$v,'period'=>$p};
+		push(@datetimes,$d);
 		(@cols) = split(/T/,$d);
 		$dts{$cols[0]} = 1;
 	}
+
 	foreach $d (sort(keys(%dts))){
 		push(@dates,$d);
 	}
@@ -155,7 +177,7 @@ foreach $sensor (sort(keys(%sensors))){
 			for($h = 0; $h < @units; $h++){
 				if($units[$h]){
 					$d = $dt."T".$units[$h]."Z";
-					print FILE ",".($sensors{$sensor}{'values'}{$d}{'value'} && $sensors{$sensor}{'values'}{$d}{'value'} gt 0 && $sensors{$sensor}{'values'}{$d}{'period'} == 60 ? $sensors{$sensor}{'values'}{$d}{'value'} : "");
+					print FILE ",".($values{$d}{'value'} && $values{$d}{'value'} gt 0 && $values{$d}{'period'} == 60 ? $values{$d}{'value'} : "");
 				}
 			}
 			print FILE "\n";
@@ -182,6 +204,9 @@ foreach $sensor (sort(keys(%sensors))){
 	# Save each lane with its start time and size in bytes
 	$sensorlane{$s} .= "\"$lane\":{\"start\":\"$datetimes[0]\",\"b\":".(-s $file).",\"title\":\"".($sitedata{$s}{'lanes'}{$lane}{'description'}||"")."\"}";
 
+	# Remove the temporary file
+	`rm $sensors{$sensor}{'file'}`;
+
 }
 
 open(FILE,">:utf8","index-cycle.json");
@@ -207,15 +232,18 @@ close(FILE);
 ########################
 
 sub getPackage {
-	local ($url,$dir,$prefix,$str,$json,@resources,$n,$file,$y,@lines,@header,%h,@cols,$c,$i,$l,$sensor,$date,$id,%config,$key,$period,$lat,$lon,$times,$t1,$t2,$h1,$h2,@letters,%years,%datafiles);
+	local ($url,$tmp,$raw,$dir,$prefix,$str,$json,@resources,$n,$file,$y,@lines,@header,%h,@cols,$c,$i,$l,$sensor,$date,$id,%config,$key,$period,$lat,$lon,$times,$t1,$t2,$h1,$h2,@letters,%years,%datafiles);
 	$url = $_[0];
 	%config = %{$_[1]};
 	$dir = $config{'dir'};
+	$raw = $dir."/raw/";
+	$tmp = $dir."/tmp/";
 	$prefix = $config{'prefix'};
 
 	# Make the directory if it doesn't exist
 	if(!-d $dir){ `mkdir $dir`; }
-	if(!-d $dir."/raw/"){ `mkdir $dir/raw/`; }
+	if(!-d $raw){ `mkdir $raw`; }
+	if(!-d $tmp){ `mkdir $tmp`; }
 
 
 	$str = "";
@@ -343,7 +371,7 @@ sub getPackage {
 	my @output = ();
 	foreach $key (sort(keys(%datafiles))){
 		print "FILE $prefix - $key - $datafiles{$key} - $dir - $config{'yearly'}{'lane'}\n";
-		push(@output,{'file'=>$datafiles{$key},'prefix'=>$prefix,'dir'=>$dir,'yearly'=>$config{'yearly'}});
+		push(@output,{'file'=>$datafiles{$key},'prefix'=>$prefix,'dir'=>$dir,'raw'=>$raw,'tmp'=>$tmp,'yearly'=>$config{'yearly'}});
 	}
 	return @output;
 
