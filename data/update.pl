@@ -217,6 +217,8 @@ sub getPackage {
 	@lines = <FILE>;
 	close(FILE);
 	$str = join("\n",@lines);
+	# Remove the metadata file
+	`rm $file`;
 
 
 	$json = JSON::XS->new->utf8->decode($str);
@@ -246,7 +248,7 @@ sub getPackage {
 			# Now build a local file name. There can be more than one file per year so use the internal ID
 			$file = $dir."/raw/".$resources[$i]{'id'}.".csv";
 			$datafiles{$y."-".$years{$y}} = $file;
-			print "YEAR = $y, FILE = $file ($resources[$i]{'name'}".($resources[$i]{'description'} ? " - ".$resources[$i]{'description'} : "").")\n";
+			#print "YEAR = $y, FILE = $file ($resources[$i]{'name'}".($resources[$i]{'description'} ? " - ".$resources[$i]{'description'} : "").")\n";
 			if(!-e $file){
 				print "Getting $dir > $prefix > $y".($resources[$i]{'size'} ? " (".$resources[$i]{'size'}." bytes)":"(unknown size)")."\n";
 				`wget -q --no-check-certificate -O $file "$resources[$i]{'url'}"`;
