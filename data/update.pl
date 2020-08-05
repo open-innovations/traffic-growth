@@ -11,7 +11,6 @@ use utf8;
 %sensorlane = ();
 
 
-
 # Get the Leeds cycle growth package from Data Mill North
 #getDatapressPackagePackage("https://datamillnorth.org/api/action/package_show?id=leeds-annual-cycle-growth-","leeds","cycle");
 # Get traffic 
@@ -107,7 +106,7 @@ close(FILE);
 ########################
 
 sub getPackage {
-	local ($url,$dir,$prefix,$str,$json,@resources,$n,$file,$y,@years,@lines,@header,%h,@cols,$c,$i,$l,$sensor,$date,$id,%config,$key,$period,$lat,$lon,$times,$t1,$t2,$h1,$h2);
+	local ($url,$dir,$prefix,$str,$json,@resources,$n,$file,$y,@lines,@header,%h,@cols,$c,$i,$l,$sensor,$date,$id,%config,$key,$period,$lat,$lon,$times,$t1,$t2,$h1,$h2,@letters,%years,%datafiles);
 	$url = $_[0];
 	%config = %{$_[1]};
 	$dir = $config{'dir'};
@@ -117,20 +116,37 @@ sub getPackage {
 	$json = JSON::XS->new->utf8->decode($str);
 	@resources = @{$json->{'result'}->{'resources'}};
 	$n = @resources;
-	@years = ();
+	%years = ();
+	%datafiles = ();
+	@letters = ('A'..'Z');
+	
 
 	# Make the directory if it doesn't exist
 	if(!-d $dir){ `mkdir $dir`; }
 	if(!-d $dir."/raw/"){ `mkdir $dir/raw/`; }
 
+	# Loop over the resources (oldest to newest)
 	for($i = 0; $i < $n; $i++){
-		$resources[$i]{'name'} =~ s/\s+$//g;
+		# Remove leading/trailing spaces in name
+		$resources[$i]{'name'} =~ s/(^\s+|\s+$)//g;
 		if($resources[$i]{'name'} =~ /([0-9]{4})/){
+			# Find the year
 			$y = $1;
-			push(@years,$y);
-			$file = $dir."/raw/$prefix".($prefix ? "-" : "").$y.".csv";
+			if(!$years{$y}){ $years{$y} = $letters[0]; }
+			else{
+				for($l = 1; $l < @letters; $l++){
+					if($letters[$l] gt $years{$y}){
+						$years{$y} = $letters[$l];
+						last;
+					}
+				}
+			}
+			# Now build a local file name. There can be more than one file per year so use the internal ID
+			$file = $dir."/raw/".$resources[$i]{'id'}.".csv";
+			$datafiles{$y."-".$years{$y}} = $file;
+			print "YEAR = $y, FILE = $file ($resources[$i]{'name'}".($resources[$i]{'description'} ? " - ".$resources[$i]{'description'} : "").")\n";
 			if(!-e $file){
-				print "Getting $dir > $prefix > $y\n";
+				print "Getting $dir > $prefix > $y".($resources[$i]{'size'} ? " (".$resources[$i]{'size'}." bytes)":"(unknown size)")."\n";
 				`wget -q --no-check-certificate -O $file "$resources[$i]{'url'}"`;
 			}
 		}elsif($resources[$i]{'name'} =~ /Locations|Site Reference/i){
@@ -139,6 +155,7 @@ sub getPackage {
 				print "Getting $dir > $prefix > $resources[$i]{'name'}\n";
 				`wget -q --no-check-certificate -O $file "$resources[$i]{'url'}"`;
 			}
+			# PRocess the site locations file
 			open(FILE,$file);
 			@lines = <FILE>;
 			close(FILE);
@@ -203,18 +220,16 @@ sub getPackage {
 					$sitedata{$key}{'lon'} = sprintf("%0.5f",$lon);
 				}
 
-				print $key." - $sitedata{$key}{'name'}  $sitedata{$key}{'lat'},$sitedata{$key}{'lon'}\n";
+				print "SITE: ".$key." - $sitedata{$key}{'name'}  $sitedata{$key}{'lat'},$sitedata{$key}{'lon'}\n";
 
 			}
 		}
 	}
 
-	@years = sort(@years);
 
-	for($y = 0; $y < @years; $y++){
-		print "$prefix - $years[$y]\n";
-		$file = $dir."/raw/$prefix".($prefix ? "-" : "")."$years[$y].csv";
-		open(CSV,$file);
+	foreach $key (sort(keys(%datafiles))){
+		print "$prefix - $key - $datafiles{$key}\n";
+		open(CSV,$datafiles{$key});
 		@lines = <CSV>;
 		close(CSV);
 		%h = ();
