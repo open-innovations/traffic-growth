@@ -26,89 +26,98 @@ for($f = 0; $f < @rtn ; $f++){
 	$prefix = $rtn[$f]{'prefix'};
 	print "$rtn[$f]{'prefix'} - $rtn[$f]{'file'}\n";
 	open(CSV,$rtn[$f]{'file'});
-	@lines = <CSV>;
-	close(CSV);
 	%h = ();
-	for($i = 0; $i < @lines; $i++){
-		$lines[$i] =~ s/[\n\r]//g;
-	}
-	(@header) = split(/,(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))/,$lines[0]);
-	for($c = 0; $c < @header; $c++){ $h{$header[$c]} = $c; }
-	for($i = 1; $i < @lines; $i++){
-		(@cols) = split(/,(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))/,$lines[$i]);
+	$i = 0;
+	while(<CSV>){
+		$line = $_;
+		$line =~ s/[\n\r]//g;
+		if($line ne ""){
+			@cols = split(/,(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))/,$line);
+			if($i == 0){
 
-		$id = "";
-		if($rtn[$f]{'yearly'}{'id'} && $h{$rtn[$f]{'yearly'}{'id'}} ne ""){
-			$id = $cols[$h{$rtn[$f]{'yearly'}{'id'}}];
-			if($id){
-				$id =~ s/^0{4,}//;
-			}
-		}
+				for($c = 0; $c < @cols; $c++){ $h{$cols[$c]} = $c; }
 
-		if($id eq ""){
-			print "WARNING on line $i of $file ($cols[$h{$rtn[$f]{'yearly'}{'id'}}])\n";
-		}
-		$sensor = "default";
-		if($rtn[$f]{'yearly'}{'lane'}){
-			$sensor = $dir."-".$prefix."-".$id."-".$cols[$h{$rtn[$f]{'yearly'}{'lane'}}];
-		}
-		$h1 = 0;
-		$h2 = 0;
-		$date = "";
-		
-		# Process the date column
-		if($rtn[$f]{'yearly'}{'date'} && $h{$rtn[$f]{'yearly'}{'date'}} ne ""){
-			$date = $cols[$h{$rtn[$f]{'yearly'}{'date'}}];
-			# Tidy if it is a datetime stamp
-			if($date =~ /([0-9]{2})\/([0-9]{2})\/([0-9]{4}) ([0-9]{2}):([0-9]{2})/){
-				$date =~ s/([0-9]{2})\/([0-9]{2})\/([0-9]{4}) ([0-9]{2}):([0-9]{2})/$3-$2-$1T$4:$5Z/g;
-				$h1 = $4 + ($5/60);
-				$h2 = int($h1+1);
-				$date =~ s/T[0-9]{2}:[0-9]{2}Z//;
-			}
-		}
+			}else{
 
-		$period = 0;
-		if(!$sensors{$sensor}){
-			$sensors{$sensor} = {'values'=>{}};
-		}
-
-
-		# Process time if separate
-		if($rtn[$f]{'yearly'}{'time'} && $h{$rtn[$f]{'yearly'}{'time'}} ne ""){
-			$times = $cols[$h{$rtn[$f]{'yearly'}{'time'}}];
-			if($times =~ /([0-9]{2}):([0-9]{2})\-([0-9]{2}):([0-9]{2})/){
-				$t1 = $1.":".$2;
-				$t2 = $3.":".$4;
-				$h1 = $1 + ($2/60);
-				$h2 = $3 + ($4/60);
-				if($h1 == 23 && $h2 == 0){ $h2 = 24; }
-				$period = ($h2-$h1)*60;
-			}
-		}else{
-			if($rtn[$f]{'yearly'}{'period'} && $h{$rtn[$f]{'yearly'}{'period'}} ne ""){
-				$period = $cols[$h{$rtn[$f]{'yearly'}{'period'}}];
-			}
-		}
-
-#print "$sensor - $h{$rtn[$f]{'yearly'}{'date'}} - $date - $h1 - $h2\n";
-		for($hh = $h1; $hh < $h2; $hh++){
-			$datestamp = $date."T".sprintf("%02d",int($hh)).":".sprintf("%02d",int(($hh - int($hh))*60))."Z";
-			$sensors{$sensor}{'values'}{$datestamp} = {'value'=>0,'period'=>$period};
-			if($rtn[$f]{'yearly'}{'count'} && $h{$rtn[$f]{'yearly'}{'count'}} ne ""){
-				$c = $cols[$h{$rtn[$f]{'yearly'}{'count'}}];
-				if($period/60 > 1){
-					$c = sprintf("%.1f",$c/($period/60));
-					# Update period
-					$sensors{$sensor}{'values'}{$datestamp}{'period'} = 60;
+				$id = "";
+				if($rtn[$f]{'yearly'}{'id'} && $h{$rtn[$f]{'yearly'}{'id'}} ne ""){
+					$id = $cols[$h{$rtn[$f]{'yearly'}{'id'}}];
+					if($id){
+						$id =~ s/^0{4,}//;
+					}
 				}
-				$sensors{$sensor}{'values'}{$datestamp}{'value'} = $c;
+				
+				if($id eq ""){
+					print "WARNING on line $i of $file ($cols[$h{$rtn[$f]{'yearly'}{'id'}}])\n";
+				}
+				$sensor = "default";
+				if($rtn[$f]{'yearly'}{'lane'} && $h{$rtn[$f]{'yearly'}{'lane'}}>=0){
+					$sensor = $dir."-".$prefix."-".$id."-".$cols[$h{$rtn[$f]{'yearly'}{'lane'}}];
+				}else{
+					print "$sensor = $dir = $prefix = $id = $rtn[$f]{'yearly'}{'lane'} = $h{$rtn[$f]{'yearly'}{'lane'}}\n";
+				}
+				$h1 = 0;
+				$h2 = 0;
+				$date = "";
+				
+				# Process the date column
+				if($rtn[$f]{'yearly'}{'date'} && $h{$rtn[$f]{'yearly'}{'date'}} ne ""){
+					$date = $cols[$h{$rtn[$f]{'yearly'}{'date'}}];
+					# Tidy if it is a datetime stamp
+					if($date =~ /([0-9]{2})\/([0-9]{2})\/([0-9]{4}) ([0-9]{2}):([0-9]{2})/){
+						$date =~ s/([0-9]{2})\/([0-9]{2})\/([0-9]{4}) ([0-9]{2}):([0-9]{2})/$3-$2-$1T$4:$5Z/g;
+						$h1 = $4 + ($5/60);
+						$h2 = int($h1+1);
+						$date =~ s/T[0-9]{2}:[0-9]{2}Z//;
+					}
+				}
+
+				$period = 0;
+				if(!$sensors{$sensor}){
+					$sensors{$sensor} = {'values'=>{}};
+				}
+
+
+				# Process time if separate
+				if($rtn[$f]{'yearly'}{'time'} && $h{$rtn[$f]{'yearly'}{'time'}} ne ""){
+					$times = $cols[$h{$rtn[$f]{'yearly'}{'time'}}];
+					if($times =~ /([0-9]{2}):([0-9]{2})\-([0-9]{2}):([0-9]{2})/){
+						$t1 = $1.":".$2;
+						$t2 = $3.":".$4;
+						$h1 = $1 + ($2/60);
+						$h2 = $3 + ($4/60);
+						if($h1 == 23 && $h2 == 0){ $h2 = 24; }
+						$period = ($h2-$h1)*60;
+					}
+				}else{
+					if($rtn[$f]{'yearly'}{'period'} && $h{$rtn[$f]{'yearly'}{'period'}} ne ""){
+						$period = $cols[$h{$rtn[$f]{'yearly'}{'period'}}];
+					}
+				}
+
+				if(($h2 - $h1 > 24) || ($h2 - $h1 < 0)){
+					print "$sensor - $h{$rtn[$f]{'yearly'}{'date'}} - $date - $h1 - $h2\n";
+				}
+				for($hh = $h1; $hh < $h2; $hh++){
+					$datestamp = $date."T".sprintf("%02d",int($hh)).":".sprintf("%02d",int(($hh - int($hh))*60))."Z";
+					$sensors{$sensor}{'values'}{$datestamp} = {'value'=>0,'period'=>$period};
+					if($rtn[$f]{'yearly'}{'count'} && $h{$rtn[$f]{'yearly'}{'count'}} ne ""){
+						$c = $cols[$h{$rtn[$f]{'yearly'}{'count'}}];
+						if($period/60 > 1){
+							$c = sprintf("%.1f",$c/($period/60));
+							# Update period
+							$sensors{$sensor}{'values'}{$datestamp}{'period'} = 60;
+						}
+						$sensors{$sensor}{'values'}{$datestamp}{'value'} = $c;
+					}
+				}
 			}
 		}
-
+		$i++;
 	}
-}
+	close(CSV);
 
+}
 
 
 
@@ -117,6 +126,7 @@ print "Saving each sensor\n";
 foreach $sensor (sort(keys(%sensors))){
 	($dir,$prefix,$id,$lane) = split(/\-/,$sensor);
 
+	print "$sensor\n";
 	@datetimes = sort(keys(%{$sensors{$sensor}{'values'}}));
 	%dts = ();
 	@dates = "";
