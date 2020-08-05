@@ -11,18 +11,109 @@ use utf8;
 %sensorlane = ();
 
 
+# Get all the data files
 # Get the Leeds cycle growth package from Data Mill North
-#getDatapressPackagePackage("https://datamillnorth.org/api/action/package_show?id=leeds-annual-cycle-growth-","leeds","cycle");
-# Get traffic 
-##getDatapressPackage("https://datamillnorth.org/api/action/package_show?id=leeds-annual-traffic-growth","leeds","traffic");
-
-
-getPackage("https://datamillnorth.org/api/action/package_show?id=leeds-annual-cycle-growth-",{'dir'=>'leeds','prefix'=>'cycle','sites'=>{'id'=>'Site ID','description'=>'Description','title'=>'Site Name','latitude'=>'Latitude','longitude'=>'Longitude'},'yearly'=>{'id'=>'Cosit','date'=>'Sdate','lane'=>'LaneNumber','count'=>'Volume','period'=>'Period'}});
-getPackage("https://data.yorkopendata.org/api/3/action/package_show?id=automatic-cycle-counters",{'dir'=>'york','prefix'=>'cycle','sites'=>{'id'=>'SiteNumber','lane'=>'CountID','description'=>'Road','lanedesc'=>'ChannelDirection','title'=>'RoadName','latitude'=>'Northing','longitude'=>'Easting'},'yearly'=>{'id'=>'SiteRefNumber','lane'=>'CounterID','date'=>'Date','time'=>'TimePeriod','count'=>'PedalCycles'}});
+push(@rtn,getPackage("https://datamillnorth.org/api/action/package_show?id=leeds-annual-cycle-growth-",{'dir'=>'leeds','prefix'=>'cycle','sites'=>{'id'=>'Site ID','description'=>'Description','title'=>'Site Name','latitude'=>'Latitude','longitude'=>'Longitude'},'yearly'=>{'id'=>'Cosit','date'=>'Sdate','lane'=>'LaneNumber','count'=>'Volume','period'=>'Period'}}));
+# Get cycle counter data from York Open Data
+push(@rtn,getPackage("https://data.yorkopendata.org/api/3/action/package_show?id=automatic-cycle-counters",{'dir'=>'york','prefix'=>'cycle','sites'=>{'id'=>'SiteNumber','lane'=>'CountID','description'=>'Road','lanedesc'=>'ChannelDirection','title'=>'RoadName','latitude'=>'Northing','longitude'=>'Easting'},'yearly'=>{'id'=>'SiteRefNumber','lane'=>'CounterID','date'=>'Date','time'=>'TimePeriod','count'=>'PedalCycles'}}));
 
 
 
+# Process all the data files
+print "Processing data files\n";
+for($f = 0; $f < @rtn ; $f++){
+	$dir = $rtn[$f]{'dir'};
+	$prefix = $rtn[$f]{'prefix'};
+	print "$rtn[$f]{'prefix'} - $rtn[$f]{'file'}\n";
+	open(CSV,$rtn[$f]{'file'});
+	@lines = <CSV>;
+	close(CSV);
+	%h = ();
+	for($i = 0; $i < @lines; $i++){
+		$lines[$i] =~ s/[\n\r]//g;
+	}
+	(@header) = split(/,(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))/,$lines[0]);
+	for($c = 0; $c < @header; $c++){ $h{$header[$c]} = $c; }
+	for($i = 1; $i < @lines; $i++){
+		(@cols) = split(/,(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))/,$lines[$i]);
 
+		$id = "";
+		if($rtn[$f]{'yearly'}{'id'} && $h{$rtn[$f]{'yearly'}{'id'}} ne ""){
+			$id = $cols[$h{$rtn[$f]{'yearly'}{'id'}}];
+			if($id){
+				$id =~ s/^0{4,}//;
+			}
+		}
+
+		if($id eq ""){
+			print "WARNING on line $i of $file ($cols[$h{$rtn[$f]{'yearly'}{'id'}}])\n";
+		}
+		$sensor = "default";
+		if($rtn[$f]{'yearly'}{'lane'}){
+			$sensor = $dir."-".$prefix."-".$id."-".$cols[$h{$rtn[$f]{'yearly'}{'lane'}}];
+		}
+		$h1 = 0;
+		$h2 = 0;
+		$date = "";
+		
+		# Process the date column
+		if($rtn[$f]{'yearly'}{'date'} && $h{$rtn[$f]{'yearly'}{'date'}} ne ""){
+			$date = $cols[$h{$rtn[$f]{'yearly'}{'date'}}];
+			# Tidy if it is a datetime stamp
+			if($date =~ /([0-9]{2})\/([0-9]{2})\/([0-9]{4}) ([0-9]{2}):([0-9]{2})/){
+				$date =~ s/([0-9]{2})\/([0-9]{2})\/([0-9]{4}) ([0-9]{2}):([0-9]{2})/$3-$2-$1T$4:$5Z/g;
+				$h1 = $4 + ($5/60);
+				$h2 = int($h1+1);
+				$date =~ s/T[0-9]{2}:[0-9]{2}Z//;
+			}
+		}
+
+		$period = 0;
+		if(!$sensors{$sensor}){
+			$sensors{$sensor} = {'values'=>{}};
+		}
+
+
+		# Process time if separate
+		if($rtn[$f]{'yearly'}{'time'} && $h{$rtn[$f]{'yearly'}{'time'}} ne ""){
+			$times = $cols[$h{$rtn[$f]{'yearly'}{'time'}}];
+			if($times =~ /([0-9]{2}):([0-9]{2})\-([0-9]{2}):([0-9]{2})/){
+				$t1 = $1.":".$2;
+				$t2 = $3.":".$4;
+				$h1 = $1 + ($2/60);
+				$h2 = $3 + ($4/60);
+				if($h1 == 23 && $h2 == 0){ $h2 = 24; }
+				$period = ($h2-$h1)*60;
+			}
+		}else{
+			if($rtn[$f]{'yearly'}{'period'} && $h{$rtn[$f]{'yearly'}{'period'}} ne ""){
+				$period = $cols[$h{$rtn[$f]{'yearly'}{'period'}}];
+			}
+		}
+
+#print "$sensor - $h{$rtn[$f]{'yearly'}{'date'}} - $date - $h1 - $h2\n";
+		for($hh = $h1; $hh < $h2; $hh++){
+			$datestamp = $date."T".sprintf("%02d",int($hh)).":".sprintf("%02d",int(($hh - int($hh))*60))."Z";
+			$sensors{$sensor}{'values'}{$datestamp} = {'value'=>0,'period'=>$period};
+			if($rtn[$f]{'yearly'}{'count'} && $h{$rtn[$f]{'yearly'}{'count'}} ne ""){
+				$c = $cols[$h{$rtn[$f]{'yearly'}{'count'}}];
+				if($period/60 > 1){
+					$c = sprintf("%.1f",$c/($period/60));
+					# Update period
+					$sensors{$sensor}{'values'}{$datestamp}{'period'} = 60;
+				}
+				$sensors{$sensor}{'values'}{$datestamp}{'value'} = $c;
+			}
+		}
+
+	}
+}
+
+
+
+
+# Save each sensor
+print "Saving each sensor\n";
 foreach $sensor (sort(keys(%sensors))){
 	($dir,$prefix,$id,$lane) = split(/\-/,$sensor);
 
@@ -112,7 +203,22 @@ sub getPackage {
 	$dir = $config{'dir'};
 	$prefix = $config{'prefix'};
 
-	$str = join("\n",`wget -q --no-check-certificate -O- "$url"`);
+	# Make the directory if it doesn't exist
+	if(!-d $dir){ `mkdir $dir`; }
+	if(!-d $dir."/raw/"){ `mkdir $dir/raw/`; }
+
+
+	$str = "";
+	$file = $dir."/raw/$prefix-data.json";
+	print "Getting $url to $file\n";
+	`wget -q --no-check-certificate -O $file "$url"`;
+
+	open(FILE,$file);
+	@lines = <FILE>;
+	close(FILE);
+	$str = join("\n",@lines);
+
+
 	$json = JSON::XS->new->utf8->decode($str);
 	@resources = @{$json->{'result'}->{'resources'}};
 	$n = @resources;
@@ -120,10 +226,6 @@ sub getPackage {
 	%datafiles = ();
 	@letters = ('A'..'Z');
 	
-
-	# Make the directory if it doesn't exist
-	if(!-d $dir){ `mkdir $dir`; }
-	if(!-d $dir."/raw/"){ `mkdir $dir/raw/`; }
 
 	# Loop over the resources (oldest to newest)
 	for($i = 0; $i < $n; $i++){
@@ -226,10 +328,16 @@ sub getPackage {
 		}
 	}
 
+	my @output = ();
+	foreach $key (sort(keys(%datafiles))){
+		print "FILE $prefix - $key - $datafiles{$key} - $dir - $config{'yearly'}{'lane'}\n";
+		push(@output,{'file'=>$datafiles{$key},'prefix'=>$prefix,'dir'=>$dir,'yearly'=>$config{'yearly'}});
+	}
+	return @output;
 
 	foreach $key (sort(keys(%datafiles))){
 		print "$prefix - $key - $datafiles{$key}\n";
-		open(CSV,$datafiles{$key});
+		open(CSV,$datafiles{$key}{'file'});
 		@lines = <CSV>;
 		close(CSV);
 		%h = ();
