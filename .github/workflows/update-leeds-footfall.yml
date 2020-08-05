@@ -1,0 +1,34 @@
+# This workflow will install dependencies, run the update script, then commit and push changes or exit if no changes have been made.
+
+name: Update Leeds footfall data
+
+on:
+  schedule:
+    - cron: 0 17 * * 1,3,5
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r data/requirements.txt
+    - name: Run update script and commit changes
+      run: |
+        lastdate=$(python data/update-footfall.py)
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git commit -m "Update Leeds footfall data to $lastdate" || exit 0
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
