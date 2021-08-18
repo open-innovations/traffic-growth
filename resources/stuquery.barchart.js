@@ -12,11 +12,10 @@
 
 	function BarChart(target,attr){
 
-		var ver = "0.9.6";
+		var ver = "0.9.9";
 		this.target = target;
 		if(S(this.target).length == 0) return {};
 		this.attr = attr || {};
-		this.bins;
 		this.events = {resize:""};
 		this.attr.units = (typeof this.attr.units==="undefined") ? "" : this.attr.units;
 		this.attr.formatX = (typeof this.attr.formatX==="undefined") ? (typeof this.attr.formatKey==="function" ? this.attr.formatKey : function(key){ return key; }) : this.attr.formatX;
@@ -30,7 +29,7 @@
 		this.inc = this.attr.inc || undefined;
 		this.mintick = this.attr.mintick || 3;
 		this.bin = (typeof this.attr.bin==="function") ? this.attr.bin : function(v){ return (this.typ==="string" ? this.fields[v] : Math.floor((v - this.min)/this.inc)); };
-		this.version = function(){ return ver; }
+		this.version = function(){ return ver; };
 		return this;
 	}
 
@@ -41,7 +40,7 @@
 		if(b >= this.nbins) b = this.nbins-1;
 		if(b < 0) b = 0;
 		return (typeof this.bins[b].selected==="boolean") ? this.bins[b].selected : true;
-	}
+	};
 
 	BarChart.prototype.select = function(r){
 		for(var b = 0; b < this.nbins; b++){
@@ -51,24 +50,28 @@
 			else S('#'+this.bins[b].id).addClass('deselected');
 		}
 		return this;
-	}
-	BarChart.prototype.toggleBin = function(b){
+	};
+
+  BarChart.prototype.toggleBin = function(b){
 		this.bins[b].selected = !this.bins[b].selected;
 		S('#'+this.bins[b].id+'').toggleClass('deselected');
 		return this;
-	}
-	// A function to provide the data
+	};
+
+  // A function to provide the data
 	// Our assumption is that the bins will be the same as any previous data
 	// If you need to update the scales, call setBins afterwards
 	BarChart.prototype.setData = function(data){
 		if(data && typeof data.length==="number") this.data = data;
 		return this;
-	}
-	// A function to set/change any scaling
+	};
+
+  // A function to set/change any scaling
 	BarChart.prototype.setBins = function(attr){
 		if(!attr) attr = {};
 
 		var calc = false;
+    var b,r,s;
 
 		var typ = (this.data.length > 0 && typeof this.data[0][0]==="string") ? "string" : "number";
 		if(this.typ && typ!=this.typ) calc = true;
@@ -104,7 +107,7 @@
 				this.fields = {};
 				this.bins = {};
 				// Create empty bins
-				for(var r = 0; r < this.data.length; r++){
+				for(r = 0; r < this.data.length; r++){
 					if(!this.fields[this.data[r][0]]){
 						this.fields[this.data[r][0]] = f;
 						f++;
@@ -119,15 +122,17 @@
 				this.nbins = f;
 			}
 			// Empty bins
-			for(var b in this.bins){
-				this.bins[b].value = 0;
-				this.bins[b].values = [];
+			for(b in this.bins){
+        if(this.bins[b]){
+          this.bins[b].value = 0;
+          this.bins[b].values = [];
+        }
 			}
 		}else{
 			// We are in a number based binning regime
 			if(calc){
 				// Find range of data
-				var s = 1e100;
+				s = 1e100;
 				var e = -1e100;
 				var binning = {};
 				for(var o = 0; o < this.data.length; o++){
@@ -158,7 +163,7 @@
 			}
 			if(typeof this.nbins!=="number") this.nbins = Math.ceil(this.range/this.inc);
 			// Empty the bins
-			for(var b = 0 ; b < this.nbins ; b++){
+			for(b = 0 ; b < this.nbins ; b++){
 				if(!this.bins[b]) this.bins[b] = {'selected':true};
 				this.bins[b].value = 0;
 				this.bins[b].values = [];
@@ -167,12 +172,12 @@
 		}
 		if(attr.mintick) this.mintick = attr.mintick;
 		// Populate bins
-		for(var r = 0; r < this.data.length; r++){
+		for(r = 0; r < this.data.length; r++){
 			b = this.bin(this.data[r][0]);
 			if(typeof this.data[r][1]==="undefined"){
 			}else{
 				if(this.data[r][1].length > 1){
-					for(var s = 0; s < this.data[r][1].length; s++){
+					for(s = 0; s < this.data[r][1].length; s++){
 						// If no series bin has been defined, define it now
 						if(typeof this.bins[b].values[s]!=="number") this.bins[b].values[s] = 0;
 						this.bins[b].value += parseFloat(this.data[r][1][s]);
@@ -187,8 +192,9 @@
 			}
 		}
 		return this;
-	}
-	BarChart.prototype.getYRange = function(){
+	};
+
+  BarChart.prototype.getYRange = function(){
 		var mx = 0;
 		var mn = 0;
 		// Find the peak value
@@ -199,14 +205,16 @@
 			if(v < 0) mn = v;
 		}
 		return {'min':mn,'max':mx};
-	}
-	BarChart.prototype.draw = function(){
+	};
+
+  BarChart.prototype.draw = function(){
 
 		var id = this.target.substr(1).replace(/^([^\s]+).*$/,function(m,p1){return p1;});
 		if(!this.target || !this.bins) return this;
 
 		var mx = 0;
 		var mn = 0;
+    var b,v,s;
 
 		if(this.nbins > 0){
 			S(this.target).addClass('barchart').css({'margin-bottom':'2.25em'});
@@ -224,11 +232,11 @@
 			mn = (this.attr.ymin) ? this.attr.ymin : 0;
 
 			// Find the peak value
-			for(var b = 0; b < this.nbins; b++){
+			for(b = 0; b < this.nbins; b++){
 				if(this.bins[b].value > mx) mx = this.bins[b].value;
-				var v = 0;
-				for(var s = 0; s < this.bins[b].values.length; s++) v += (this.bins[b].values[s]);
-				if(v < 0) mn = v;
+				v = 0;
+				for(s = 0; s < this.bins[b].values.length; s++) v += (this.bins[b].values[s]);
+				if(v < 0 && v < mn) mn = v;
 			}
 
 			// Build the basic graph structure
@@ -249,75 +257,71 @@
 			var maketable = (S(this.target+' table td').length == 0);
 			output = "";
 
-//			h--;
-
-			for(var b = 0; b < this.nbins; b++){
+			for(b = 0; b < this.nbins; b++){
 				horig = -1;
 				key = this.bins[b].key;
 				hbar = h*(mx > 0 ? Math.abs(this.bins[b].value/r) : 0);
-				var v = 0;
-				for(var s = 0; s < this.bins[b].values.length; s++) v += (this.bins[b].values[s]);
+				v = 0;
+				for(s = 0; s < this.bins[b].values.length; s++) v += (this.bins[b].values[s]);
 				htop = h*((v < 0 ? mx : mx-v)/r);
+				hbot = Math.abs(h*((v >= 0 ? mn : v-mn)/r));
 				if(isNaN(htop)) htop = h;
-				ha = htop;
 				hb = hbar;
-				if(horig < 0) horig = ha+hb;
-				if(this.bins[b].value >= 0 && ha+hb != horig) ha = (horig-hb);
-				hc = h-ha-hb;
-				if(ha < 0) ha = 0;
+				if(horig < 0) horig = htop+hb;
+				hc = h-htop-hb;
+				if(htop < 0) htop = 0;
+				if(hbot < 0) hbot = 0;
 				if(hc < 0) hc = 0;
-//if(b == 0) console.log(hbar,htop,mx,r,this.bins[b].value/r,ha,hb,hc)
-//				// If the value is negative we shift it down a pixel to see the zero line
-//				if(this.bins[b].value < 0){ ha++; hb--; }
 				idbar = id+'-bar-'+(typeof key==="string" ? b : key.replace(/ /g,'-'));
 				this.bins[b].id = idbar;
 
 				cls = (!this.bins[b].selected ? ' deselected' : '');
 				cls = (cls ? ' ':'') + this.attr.formatBar.call(this,key,this.bins[b].value);
 				if(maketable){
-					output += '<td id="'+idbar+'" style="width:'+(100/this.nbins).toFixed(3)+'%;height:100%;" class="'+(!this.bins[b].selected ? ' deselected' : '')+cls+'" data-index="'+b+'"><div class="antibar" style="height:'+ha.toFixed(4)+'%;"></div>';
+					output += '<td id="'+idbar+'" style="width:'+(100/this.nbins).toFixed(3)+'%;height:100%;" class="'+(!this.bins[b].selected ? ' deselected' : '')+cls+'" data-index="'+b+'"><div class="antibar" style="height:'+htop.toFixed(4)+'%;"></div>';
 
 					// Build individual series
 					if(this.bins[b].values.length > 0){
 						idbar = id+'-bar-'+(typeof key==="string" ? b : key.replace(/ /g,'-'));
 						key = this.bins[b].key;
 						var html = "";
-						var v = 0;
-						for(var s = this.bins[b].values.length - 1; s >= 0; s--){
+						v = 0;
+						for(s = this.bins[b].values.length - 1; s >= 0; s--){
 							v += Math.abs(this.bins[b].values[s]);
 						}
-						for(var s = this.bins[b].values.length - 1; s >= 0; s--){
+						for(s = this.bins[b].values.length - 1; s >= 0; s--){
 							//hbb = Math.floor(h*(mx > 0 ? Math.abs(this.bins[b].values[s]/r) : 0));
 							hbb = hb*(Math.abs(this.bins[b].values[s])/v);
 							if(isNaN(hbb)) hbb = 0;
-							output += '<a href="#" class="bar '+this.attr.formatBar.call(this,key,this.bins[b].values[s],s)+'" title="'+key+': '+(this.attr.units || "")+this.formatNumber(this.bins[b].values[s])+'" data-index-series="'+s+'" style="height:'+hbb+'%;"></a>';
+							output += '<a href="#" class="bar '+this.attr.formatBar.call(this,key,this.bins[b].values[s],s)+'" title="'+key+': '+(this.attr.units || "")+this.formatNumber(this.bins[b].values[s])+'" data-index-series="'+s+'" style="height:'+hbb.toFixed(4)+'%;"></a>';
 						}
 					}else{
 						hbb = 0;
 						output += '<a href="#" class="bar '+this.attr.formatBar.call(this,key,0,s)+'" title="'+key+': '+(this.attr.units || "")+this.formatNumber(0)+'" data-index-series="'+s+'" style="height:'+hbb+'px;"></a>';
 					}
 
-					output += '<div class="antibar" style="height:'+hc+'px;"></div><div class="barbase"></div>'+(((typeof key==="string" && key.indexOf('-01')) || key.indexOf('-')==-1) ? '<span class="label">'+this.attr.formatX.call(this,key)+'</span>' : '')+'</td>';
+					output += '<div class="antibar" style="height:'+hbot.toFixed(4)+'%;"></div><div class="barbase"></div>'+(((typeof key==="string" && key.indexOf('-01')) || key.indexOf('-')==-1) ? '<span class="label">'+this.attr.formatX.call(this,key)+'</span>' : '')+'</td>';
 
 				}else{
 					p = S('#'+idbar+'');
+
 					// Update top antibar
-					S(p.find('.antibar')[0]).css({'height':ha+'px'});
+					S(p.find('.antibar')[0]).css({'height':htop.toFixed(4)+'%'});
 					// Update bottom antibar
-					S(p.find('.antibar')[1]).css({'height':hc+'px'});
+					S(p.find('.antibar')[1]).css({'height':hbot.toFixed(4)+'%'});
 
 					// Update each series bar height
 					var bars = p.find('.bar');
 					for(var br = 0; br < bars.length; br++){
 						var seriesbar = S(bars[br]);
 						s = parseInt(seriesbar.attr('data-index-series'));
-						var v = 0;
+						v = 0;
 						for(var s2 = this.bins[b].values.length - 1; s2 >= 0; s2--){
 							v += Math.abs(this.bins[b].values[s2]);
 						}
-						hbb = Math.round(hb*(Math.abs(this.bins[b].values[s])/v));
+						hbb = hb*(Math.abs(this.bins[b].values[s])/v);
 						if(isNaN(hbb)) hbb = 0;
-						seriesbar.css({'height':hbb+'px'}).attr('title',key+': '+(this.attr.units || "")+this.formatNumber(this.bins[b].values[s]));
+						seriesbar.css({'height':hbb.toFixed(4)+'%'}).attr('title',key+': '+(this.attr.units || "")+this.formatNumber(this.bins[b].values[s]));
 					}
 					
 					p.find('.label').html(this.attr.formatX.call(this,key));
@@ -327,8 +331,8 @@
 			if(maketable){
 				// Add the table cells
 				S(this.target+' table tr').html(output);
-				S(this.target).on('mouseleave',{me:this},function(e){ if(e.data){ e.data.me.trigger("mouseleave",{event:e}); } })
-				S(this.target).on('mouseover',{me:this},function(e){ e.data.me.trigger("mouseover",{event:e}); })
+				S(this.target).on('mouseleave',{me:this},function(e){ if(e.data){ e.data.me.trigger("mouseleave",{event:e}); } });
+				S(this.target).on('mouseover',{me:this},function(e){ e.data.me.trigger("mouseover",{event:e}); });
 			}
 
 			// Attach the events
@@ -342,7 +346,7 @@
 			this.drawn = true;
 		}
 		return this;
-	}
+	};
 	
 	// Attach a handler to an event for the Graph object in a style similar to that used by jQuery
 	//   .on(eventType[,eventData],handler(eventObject));
@@ -351,18 +355,19 @@
 	BarChart.prototype.on = function(ev,e,fn){
 		if(typeof ev!="string") return this;
 		if(typeof fn=="undefined"){ fn = e; e = {}; }
-		else{ e = {data:e} }
+		else{ e = {data:e}; }
 		if(typeof e!="object" || typeof fn!="function") return this;
 		if(this.events[ev]) this.events[ev].push({e:e,fn:fn});
 		else this.events[ev] = [{e:e,fn:fn}];
 
 		return this;
-	}
-	BarChart.prototype.off = function(ev){
+	};
+
+  BarChart.prototype.off = function(ev){
 		if(typeof ev != "string") return this;
 		if(typeof this.events[ev]=="object") this.events[ev] = [];
 		return this;
-	}
+	};
 
 	// Trigger a defined event with arguments. This is for internal-use to be 
 	// sure to include the correct arguments for a particular event
@@ -373,11 +378,11 @@
 		if(typeof this.events[ev]=="object"){
 			for(var i = 0 ; i < this.events[ev].length ; i++){
 				var e = G.extend(this.events[ev][i].e,args);
-				if(typeof this.events[ev][i].fn == "function") o.push(this.events[ev][i].fn.call(this,e))
+				if(typeof this.events[ev][i].fn == "function") o.push(this.events[ev][i].fn.call(this,e));
 			}
 		}
 		if(o.length > 0) return o;
-	}
+	};
 
 	BarChart.prototype.getGrid = function(mn,mx,mintick){
 		var rg = mx-mn;
@@ -407,7 +412,7 @@
 		// We don't want an empty bin at the top end of the range
 		if(t_max > mx) t_max -= t_inc;
 		return {'min':t_min,'max':t_max,'inc':t_inc,'range':t_max-t_min};
-	}
+	};
 	
 	BarChart.prototype.formatNumber = function(v){
 		if(typeof v !== "number") return v;
@@ -421,8 +426,8 @@
 		if(v >= 1e4) return Math.round(v/1e3)+"k";
 		// Remove rounding issues
 		return (''+v).replace(/0{5,}1$/,"");
-	}
+	};
 
-	S.barchart = function(target,bins,attr){ return new BarChart(target,bins,attr); }
+	S.barchart = function(target,bins,attr){ return new BarChart(target,bins,attr); };
 
 })(S);

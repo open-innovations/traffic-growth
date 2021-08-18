@@ -149,7 +149,8 @@
 	#map .leaflet-popup-content p { margin: 16px 0; }
 	#map .leaflet-popup-content ul { display: grid; grid-template-columns: repeat(2, 1fr); grid-gap: 0.25em; }
 	#map .leaflet-popup-content a { font: inherit; font-size: inherit; color: inherit; display: block; }
-	
+	#map .leaflet-popup-content h3 { margin-top: 0; }
+
 	.calendar { border-radius: 2px; }
 	.calendar h2 { margin-top: 0; margin-bottom: 0!important; }
 	.calendar .scalebar { position: relative; margin-bottom: 2em; border-top: 1px solid black; border-bottom: 1px solid black; height: 1em; }
@@ -227,88 +228,49 @@
 	<meta name="keywords" content="traffic,cycle,bicycle">
 </head>
 <body class="projects">
-	<input type="checkbox" id="hamburger" class="hamburger">
-	<label for="hamburger" class="hamburger"><span class="nv">Toggle menu (if not visible)</span></label>
 	<header class="b1-bg">
-		<div class="glory b1-bg">
-			<div class="glory-image"></div>
-			<div class="glory-opacity">
-				<div class="holder">
-					<a href="/"><img alt="ODI Leeds" src="resources/images/odileeds.svg"></a>
-				</div>
+		<div class="b1-bg padded">
+			<div class="holder" style="text-align:center;">
+				<a href="https://odileeds.org/"><img alt="ODI Leeds" src="https://odileeds.org/resources/images/odileeds-5.svg"></a>
+				<h1>Traffic growth</h1>
 			</div>
-		</div>
-		<div class="holder">
-			<nav>
-			<ul>
-				<li><a href="https://odileeds.org/about/">About</a></li>
-				<li class="seasonal"><a href="https://odileeds.org/data/">Data &amp; projects</a></li>
-				<li><a href="https://odileeds.org/blog/">Knowledge &amp; resources</a></li>
-				<li><a href="https://odileeds.org/services/sponsors">Sponsors</a></li>
-				<li><a href="https://odileeds.org/services/">Events &amp; space hire</a></li>
-				<li class="search search2"><form action="https://odileeds.org/search/" method="GET"><label for="q">Search the ODI Leeds website</label><input type="text" id="q" name="q" value="" /><input type="submit" value="Search" class="b6-bg" /></form></li>
-			</ul>
-			</nav>
 		</div>
 	</header>
 
 	<div id="main">
-		<div class="seasonal">
-			<div class="holder">
-				<h1>Traffic growth</h1>
-			</div>
-		</div>
+		<div id="map" class="map b5-bg padded padded-bottom">There will be a map here which will show the traffic counters and let you select them. In the mean time try this <a href="?leeds-cycle-100122:1;leeds-cycle-100122:2">example</a> which will load two counters.</div>
 		<div class="holder">
-			<p>Visualising cycle count and footfall data. Select a counter to see charts. See <a href="#notes">more about the data below</a>.</p>
 			<div id="traffic">
-				<div id="map" class="map b5-bg padded padded-bottom">There will be a map here which will show the traffic counters and let you select them. In the mean time try this <a href="?leeds-cycle-100122:1;leeds-cycle-100122:2">example</a> which will load two counters.</div>
+				<p>Visualising cycle count and footfall data. Select a counter on the map to see charts of <a href="#notes">the data</a>.</p>
 				<div class="output"></div>
 			</div>
 		</div>
-		<script>
-		
-		</script>
-		<div style="clear:both;"></div>
-		<div class="b5-bg padded">
-			<div class="holder">
-				<h2 id="notes">Notes</h2>
-				<p>We <a href="https://odileeds.org/blog/2020-02-28-cycle-traffic-growth">created this visualisation</a> to explore cycle sensor and footfall sensor count data published by Local Authorities.</p>
-				<p>The cycle data published by York City Council covers the period 2003-2016 and aggregates counts between midnight to 6am into one big block. We have split the count for those periods into hourly blocks.</p>
-				<h2>Source data</h2>
-				<ul class="data-source">
-					<li><a href="https://datamillnorth.org/dataset/leeds-annual-cycle-growth-">Cycle count data for West Yorkshire from Data Mill North</a> (OGLv3)</li>
-					<li><a href="https://data.yorkopendata.org/dataset/automatic-cycle-counters">Cycle counter data for York from York Open Data</a> (OGLv3)</li>
-					<li><a href="https://datamillnorth.org/dataset/leeds-city-centre-footfall-data">Footfall count data for Leeds City Centre</a> (OGLv3)</li>
-				</ul>
-				<ul class="data-source" id="source-data">
-				</ul>
-				<h2>Processing and code</h2>
-				<p>Local Authorities tend to publish large, time-period-based, files that each contain data for all their counters during that time e.g. Leeds publish cycle counts by year and the 2019 data file was over 34MB. Those sizes are impractical for web-based visualisations such as this so we have created <a href="https://github.com/odileeds/traffic-growth/tree/master/data">processed data files</a> with one counter per file. In each file, the counts are arranged with one row per day and one column per hour interval; <a href="https://github.com/odileeds/traffic-growth/blob/master/data/leeds/cycle-100122-1.csv">a counter with 8 years of hourly data</a> becomes around 100kB.</p>
- 				<p>The <a href="https://github.com/odileeds/traffic-growth">code for this visualisation</a> is published on Github under an MIT licence.</p>
-				<h2>Get involved</h2>
-				<p>If you publish foot/cycle/vehicle count data and would like to have it included in this tool, <a href="https://twitter.com/ODILeeds">get in touch with @ODILeeds</a>. This visualisation allows for a distributed publishing approach so you can publish files (in our CSV format) on your own server. You would then create <a href="https://github.com/odileeds/traffic-growth/blob/master/data/index-cycle.json">a JSON index file</a> with metadata about each of your counters.</p>
-
-			</div>	
-		</div>
 	</div>
-	<footer class="b1-bg">
-		<div class="holder">
-			<ul class="elsewhere">
-				<li class="instagram"><a href="https://www.instagram.com/odileeds/"><svg width="48" height="48" id="Layer_1" x="0px" y="0px" viewBox="83 -108.9 64 64" enable-background="new 83 -108.9 266.9 266.9" xml:space="preserve" inkscape:version="0.92.2 (5c3e80d, 2017-08-06)" sodipodi:docname="icon-instagram.svg" width="64" height="64"><metadata id="metadata4162"><rdf:RDF><cc:Work rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title /></cc:Work></rdf:RDF></metadata><defs id="defs4160"><linearGradient id="b"><stop id="stop850" stop-color="#3771c8" offset="0" /><stop id="stop852" offset=".128" stop-color="#3771c8" /><stop id="stop854" stop-opacity="0" stop-color="#60f" offset="1" /></linearGradient><linearGradient id="a"><stop id="stop857" stop-color="#fd5" offset="0" /><stop id="stop859" stop-color="#fd5" offset=".1" /><stop id="stop861" stop-color="#ff543e" offset=".5" /><stop id="stop863" stop-color="#c837ab" offset="1" /></linearGradient><radialGradient fy="578.088" fx="158.429" gradientTransform="matrix(0,-0.76215669,0.70905899,0,-376.86742,77.000827)" gradientUnits="userSpaceOnUse" xlink:href="#a" r="65" cy="578.088" cx="158.429" id="c" /><radialGradient fy="473.455" fx="147.694" gradientTransform="matrix(0.06688742,0.33406026,-1.3773564,0.27578661,653.61189,-273.89358)" gradientUnits="userSpaceOnUse" xlink:href="#b" r="65" cy="473.455" cx="147.694" id="d" /></defs><sodipodi:namedview pagecolor="#ffffff" bordercolor="#666666" borderopacity="1" objecttolerance="10" gridtolerance="10" guidetolerance="10" inkscape:pageopacity="0" inkscape:pageshadow="2" inkscape:window-width="1670" inkscape:window-height="687" id="namedview4158" showgrid="false" inkscape:zoom="5.8316" inkscape:cx="10.345232" inkscape:cy="25.813" inkscape:window-x="0" inkscape:window-y="0" inkscape:window-maximized="0" inkscape:current-layer="Layer_1" /><path style="fill:#ffffff;stroke-width:0.50000525" inkscape:connector-curvature="0" d="m 115.00226,-100.90026 c -6.51808,0 -7.33609,0.0285 -9.89611,0.145 -2.55502,0.117 -4.29904,0.5215 -5.82507,1.115011 -1.57851,0.61301 -2.91752,1.43301 -4.251536,2.76753 -1.335014,1.33401 -2.155023,2.673027 -2.77003,4.251044 -0.595006,1.526516 -1.00001,3.271034 -1.115011,5.825061 -0.114501,2.560027 -0.144502,3.378536 -0.144502,9.896603 0,6.518069 0.029,7.333578 0.145002,9.893604 0.117504,2.555027 0.522006,4.299046 1.115012,5.825061 0.613506,1.578517 1.433515,2.917531 2.768028,4.251545 1.333517,1.335014 2.672527,2.157023 4.250047,2.77003 1.52701,0.593505 3.27153,0.99801 5.82606,1.115011 2.56002,0.116503 3.37753,0.145001 9.8951,0.145001 6.51857,0 7.33408,-0.0285 9.89411,-0.145001 2.55502,-0.116997 4.30104,-0.521506 5.82805,-1.115011 1.57802,-0.613007 2.91504,-1.435016 4.24855,-2.77003 1.33501,-1.334014 2.15503,-2.673028 2.77003,-4.251044 0.59,-1.526516 0.99501,-3.271035 1.11501,-5.825061 0.11494,-2.560028 0.145,-3.376036 0.145,-9.894105 0,-6.518067 -0.03,-7.336076 -0.145,-9.896102 -0.12002,-2.555027 -0.52501,-4.299046 -1.11501,-5.825062 -0.615,-1.578517 -1.43502,-2.917534 -2.77003,-4.251544 -1.33502,-1.33501 -2.67003,-2.15502 -4.25004,-2.76753 -1.53001,-0.593511 -3.27504,-0.998011 -5.83006,-1.115011 -2.56003,-0.1165 -3.37504,-0.145 -9.89511,-0.145 z m -2.15304,4.325041 c 0.63902,-10e-4 1.35203,0 2.15304,0 6.40806,0 7.16756,0.023 9.69809,0.138 2.34003,0.107 3.61005,0.49801 4.45605,0.82651 1.12001,0.43501 1.91852,0.955013 2.75803,1.795021 0.84,0.84001 1.36001,1.640018 1.79602,2.760029 0.32851,0.845009 0.72,2.115022 0.82651,4.455047 0.11494,2.530027 0.14,3.290034 0.14,9.695101 0,6.405068 -0.025,7.165076 -0.14,9.695103 -0.10701,2.340023 -0.498,3.610038 -0.82651,4.455045 -0.435,1.120013 -0.95602,1.917521 -1.79602,2.75703 -0.84001,0.840008 -1.63752,1.360014 -2.75803,1.795019 -0.84501,0.330003 -2.11602,0.720008 -4.45605,0.827008 -2.53002,0.115008 -3.29003,0.140002 -9.69809,0.140002 -6.40857,0 -7.16808,-0.025 -9.69811,-0.140002 -2.34002,-0.107999 -3.61003,-0.499005 -4.45654,-0.827509 -1.12002,-0.435004 -1.92003,-0.955009 -2.76003,-1.795019 -0.840011,-0.840008 -1.360021,-1.638017 -1.79602,-2.758528 -0.32851,-0.84501 -0.72001,-2.115022 -0.82651,-4.455047 -0.11501,-2.530027 -0.138003,-3.290034 -0.138003,-9.699101 0,-6.409067 0.023,-7.165076 0.138003,-9.695103 0.107,-2.340023 0.498,-3.610037 0.82651,-4.456045 0.435,-1.120012 0.95601,-1.920021 1.79602,-2.760029 0.84,-0.84001 1.64001,-1.360012 2.76003,-1.796022 0.846,-0.33 2.11652,-0.72 4.45654,-0.82751 2.21403,-0.1 3.07203,-0.13 7.54507,-0.135 z m 14.96417,3.985044 c -1.59002,0 -2.88004,1.288514 -2.88004,2.87903 0,1.590017 1.29002,2.880031 2.88004,2.880031 1.59002,0 2.88003,-1.290014 2.88003,-2.880031 0,-1.590017 -1.29001,-2.88003 -2.88003,-2.88003 z m -12.81113,3.365035 c -6.80658,0 -12.32514,5.518558 -12.32514,12.325129 0,6.806572 5.51856,12.322629 12.32514,12.322629 6.80656,0 12.32313,-5.516057 12.32313,-12.322629 0,-6.806571 -5.51706,-12.325129 -12.32364,-12.325129 z m 0,4.325046 c 4.41804,0 8.00008,3.581537 8.00008,8.000083 0,4.418047 -3.58204,8.000085 -8.00008,8.000085 -4.41855,0 -8.00009,-3.582038 -8.00009,-8.000085 0,-4.418546 3.58154,-8.000083 8.00009,-8.000083 z" id="path874" /></svg></a></li>
-				<li class="github"><a href="https://github.com/ODILeeds"><svg  width="48" height="48" viewBox="83 -108.9 64 64" aria-labelledby="icon-github"><title id="icon-github">Github</title><path d="m 114.97,-100.9 c -13.24,0 -23.97,11.015 -23.97,24.606 0,10.874 6.867,20.096 16.4,23.349 1.19,0.225 1.63,-0.534 1.63,-1.183 0,-0.588 0,-2.527 0,-4.583 -6.66,1.487 -8.07,-2.901 -8.07,-2.901 -1.095,-2.842 -2.665,-3.598 -2.665,-3.598 -2.178,-1.527 0.166,-1.496 0.166,-1.496 2.409,0.17 3.669,2.534 3.669,2.534 2.14,3.762 5.62,2.674 6.98,2.044 0.22,-1.587 0.84,-2.674 1.52,-3.286 -5.32,-0.623 -10.917,-2.735 -10.917,-12.163 0,-2.689 0.937,-4.883 2.467,-6.605 -0.25,-0.625 -1.07,-3.128 0.24,-6.516 0,0 2,-0.661 6.59,2.524 1.9,-0.548 3.96,-0.819 5.99,-0.828 2.04,0 4.1,0.282 6,0.831 4.58,-3.188 6.58,-2.524 6.58,-2.524 1.31,3.391 0.49,5.891 0.24,6.513 1.55,1.722 2.47,3.916 2.47,6.605 0,9.452 -5.6,11.534 -10.94,12.145 0.86,0.762 1.62,2.258 1.62,4.554 0,3.288 0,5.94 0,6.751 0,0.655 0.44,1.422 1.65,1.182 9.52,-3.259 16.38,-12.481 16.38,-23.349 0,-13.591 -10.73,-24.606 -23.97,-24.606 z" fill="white" /></svg></a></li>
-				<li class="facebook"><a href="https://www.facebook.com/ODILeedsCityRegion"><svg width="48" height="48" viewBox="83 -108.9 64 64" aria-labelledby="icon-facebook"><title id="icon-facebook">Facebook</title><rect style="opacity:0;fill:#eeeeee;fill-opacity:1;stroke:none;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" width="64" height="64" x="83" y="-108.9" /><path d="m 109.91,-52.9 0,-21.894 -7.37,0 0,-8.533 7.37,0 0,-6.297 c 0,-7.305 4.45,-11.276 10.97,-11.276 3.12,0 5.81,0.24 6.58,0.33 l 0,7.634 -4.52,0 c -3.53,0 -4.23,1.689 -4.23,4.145 l 0,5.442 8.44,0 -1.1,8.533 -7.34,0 0,21.894 -8.8,0.02 z" fill="#ffffff" /></svg></a></li>
-				<li class="twitter"><a href="https://twitter.com/ODILeeds"><svg width="48" height="48" viewBox="83 -108.9 64 64" aria-labelledby="icon-twitter"><title id="icon-twitter">Twitter</title><g transform="matrix(0.16107,0,0,0.16107,3.9922,-188.2)" fill="#ff0000"><path d="m 633.9,812.04 c 112.46,0 173.96,-93.17 173.96,-173.96 0,-2.65 -0.1,-5.28 -0.17,-7.9 11.94,-8.63 22.31,-19.4 30.5,-31.66 -10.96,4.87 -22.75,8.14 -35.12,9.62 12.63,-7.57 22.32,-19.54 26.89,-33.81 -11.81,7 -24.89,12.09 -38.82,14.84 -11.16,-11.89 -27.04,-19.32 -44.63,-19.32 -33.77,0 -61.15,27.38 -61.15,61.13 0,4.8 0.54,9.47 1.59,13.94 -50.82,-2.55 -95.88,-26.88 -126.03,-63.88 -5.25,9.04 -8.28,19.53 -8.28,30.73 0,21.21 10.79,39.94 27.21,50.9 -10.03,-0.31 -19.46,-3.07 -27.69,-7.65 0,0.26 0,0.51 0,0.78 0,29.61 21.07,54.33 49.05,59.93 -5.14,1.4 -10.54,2.16 -16.12,2.16 -3.94,0 -7.77,-0.39 -11.49,-1.11 7.78,24.3 30.35,41.97 57.11,42.47 -20.92,16.4 -47.28,26.17 -75.93,26.17 -4.93,0 -9.8,-0.28 -14.59,-0.85 27.06,17.35 59.19,27.47 93.72,27.47" fill="#ffffff" /></g></svg></a></li>
-				<li class="youtube"><a href="https://www.youtube.com/channel/UCQl8HRQWmD2UVv0KGehPTtA/videos"><svg width="48" height="48" viewBox="83 -108.9 64 64" aria-labelledby="icon-youtube"><title id="icon-youtube">YouTube</title><g transform="matrix(0.67788,0,0,0.67788,3.418,-93.847)" fill="#ffffff"><path d="m 157.3,14.3 16.8,11.2 2.4,-1.2 -19.2,-10 z" style="opacity:0.12" fill="#ffffff" /><g fill="#ffffff"><path d="m 199.3,10.8 c 0,0 -0.7,-4.9 -2.8,-7 -2.7,-2.8 -5.7,-2.8 -7.1,-3 -9.9,-0.7 -24.8,-0.7 -24.8,-0.7 0,0 -14.9,0 -24.8,0.7 -1.4,0.2 -4.4,0.2 -7.1,3 -2.1,2.1 -2.8,7 -2.8,7 0,0 -0.7,5.7 -0.7,11.5 l 0,5.4 c 0,5.7 0.7,11.5 0.7,11.5 0,0 0.7,4.9 2.8,7 2.7,2.8 6.2,2.7 7.8,3 5.7,0.5 24.1,0.7 24.1,0.7 0,0 14.9,0 24.8,-0.7 1.4,-0.2 4.4,-0.2 7.1,-3 2.1,-2.1 2.8,-7 2.8,-7 0,0 0.7,-5.7 0.7,-11.5 l 0,-5.4 c 0.1,-5.7 -0.7,-11.5 -0.7,-11.5 z m -42,23.4 0,-19.9 19.1,10 -19.1,9.9 z" fill="#ffffff" /></g></g></svg></a></li>
-			</ul>
-			<p>Thanks to our sponsors, <a href="https://odileeds.org/services/sponsors/">they help fund us to deliver and collaborate</a>.</p>
 
-			<div class="address">
-				<a href="https://odileeds.org/location/">ODI Leeds, 3rd Floor, Munro House, Duke Street, Leeds LS9 8AG</a>				| <a href="https://beta.companieshouse.gov.uk/company/09417733">09417733</a>
-				<br /><a href="https://odileeds.org/contact/">Contact us</a> | <a href="https://odileeds.org/terms">Terms of use</a> | <a href="https://odileeds.org/privacy">Privacy policy</a> | <a href="https://odileeds.org/cookies">Cookie policy</a>
-				<br /><a href="http://creativecommons.org/licenses/by/4.0/">&copy; CC BY 4.0 ODI Leeds 2020</a>
-			</div>
-		</div>
+	<footer class="b1-bg">
+		<div class="holder tallpadded">
+			<h2 id="notes">Notes</h2>
+			<p>We <a href="https://odileeds.org/blog/2020-02-28-cycle-traffic-growth">created this visualisation</a> to explore cycle sensor and footfall sensor count data published by Local Authorities.</p>
+			<p>The cycle data published by York City Council covers the period 2003-2016 and aggregates counts between midnight to 6am into one big block. We have split the count for those periods into hourly blocks.</p>
+			<h2>Source data</h2>
+			<ul class="data-source">
+				<li><a href="https://datamillnorth.org/dataset/leeds-annual-cycle-growth-">Cycle count data for West Yorkshire from Data Mill North</a> (OGLv3)</li>
+				<li><a href="https://data.yorkopendata.org/dataset/automatic-cycle-counters">Cycle counter data for York from York Open Data</a> (OGLv3)</li>
+				<li><a href="https://datamillnorth.org/dataset/leeds-city-centre-footfall-data">Footfall count data for Leeds City Centre</a> (OGLv3)</li>
+			</ul>
+			<ul class="data-source" id="source-data">
+			</ul>
+			<h2>Processing and code</h2>
+			<p>Local Authorities tend to publish large, time-period-based, files that each contain data for all their counters during that time e.g. Leeds publish cycle counts by year and the 2019 data file was over 34MB. Those sizes are impractical for web-based visualisations such as this so we have created <a href="https://github.com/odileeds/traffic-growth/tree/master/data">processed data files</a> with one counter per file. In each file, the counts are arranged with one row per day and one column per hour interval; <a href="https://github.com/odileeds/traffic-growth/blob/master/data/leeds/cycle-100122-1.csv">a counter with 8 years of hourly data</a> becomes around 100kB.</p>
+			<p>The <a href="https://github.com/odileeds/traffic-growth">code for this visualisation</a> is published on Github under an MIT licence.</p>
+			<h2>Get involved</h2>
+			<p>If you publish foot/cycle/vehicle count data and would like to have it included in this tool, <a href="https://twitter.com/ODILeeds">get in touch with @ODILeeds</a>. This visualisation allows for a distributed publishing approach so you can publish files (in our CSV format) on your own server. You would then create <a href="https://github.com/odileeds/traffic-growth/blob/master/data/index-cycle.json">a JSON index file</a> with metadata about each of your counters.</p>
+
+
+			<p>&copy; CC BY 4.0 ODI Leeds (<a href="">Github</a>)</p>
+		</div>	
 	</footer>
+
 
 	<script src="https://odileeds.org/resources/odi.log.js"></script>
 	<script>

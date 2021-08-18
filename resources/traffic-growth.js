@@ -684,7 +684,7 @@ var counters;
 					})
 				};
 			
-				this.map = L.map('map',{'layers':[this.baseMaps.Default],'scrollWheelZoom':true,'zoomControl':true,'editable': true}).fitBounds([
+				this.map = L.map('map',{'layers':[this.baseMaps.Default],'scrollWheelZoom':false,'zoomControl':true,'editable': true}).fitBounds([
 					[lat-d, lon-d],
 					[lat+d, lon+d]
 				]);
