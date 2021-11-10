@@ -4,7 +4,7 @@ name: Update Leeds footfall data
 
 on:
   schedule:
-    - cron: 0 17 * * 4
+    - cron: '0 17 * * 4'
   workflow_dispatch:
 
 jobs:
