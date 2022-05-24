@@ -56,7 +56,7 @@ for k,v in index.items():
       for time in TIMES:
         by_time = by_date[by_date.Hour == time]
         new_row[time] = by_time.ReportCount.values[0]
-      existing = existing.append(new_row, ignore_index=True)
+      existing = pd.concat([existing,pd.DataFrame(new_row,[0])], ignore_index=True)
   existing.sort_values(by='Date', inplace=True)
   existing.to_csv(filename, index=False, date_format=ISO_DATE_FORMAT)
 new_last_date = existing.tail(n=1).Date.values[0]
