@@ -39,13 +39,6 @@ for k,v in index.items():
     new_data.LocationName = new_data.LocationName.str.strip()
     new_data.LocationName = new_data.LocationName.str.lower()
 
-    # check dates don't overlap
-    new_data_first_row = new_data.head(n=1)
-    existing_data_last_row = existing.tail(n=1)
-    last_date = existing_data_last_row.Date
-    if new_data_first_row.Date.values[0] < existing_data_last_row.Date.values[0]:
-      continue
-
     sitename = v['desc'].strip()
     sitename = sitename.lower()
     
@@ -58,6 +51,7 @@ for k,v in index.items():
         new_row[time] = by_time.ReportCount.values[0]
       existing = pd.concat([existing,pd.DataFrame(new_row,[0])], ignore_index=True)
   existing.sort_values(by='Date', inplace=True)
+  existing = existing.drop_duplicates()
   existing.to_csv(filename, index=False, date_format=ISO_DATE_FORMAT)
 new_last_date = existing.tail(n=1).Date.values[0]
 print(str(new_last_date)[:10])
