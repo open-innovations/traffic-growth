@@ -8,5 +8,5 @@
 	"leeds-footfall-7": {"start":"","c":[53.79732,-1.54418],"name":"LCC footfall counter 7","desc":"Commercial Street at Sharps","orientation":"","lanes":{"1":{"start":"2008-06-27T00:00Z","b":162480,"title":""}}},
 	"leeds-footfall-8": {"start":"","c":[53.79734,-1.54369],"name":"LCC footfall counter 8","desc":"Commercial Street at Barratts","orientation":"","lanes":{"1":{"start":"2009-07-17","b":0,"title":""}}},
 	"leeds-footfall-9": {"start":"","c":[53.80059, -1.54467],"name":"LCC footfall counter 9","desc":"Albion Street at McDonalds","orientation":"","lanes":{"1":{"start":"2020-09-21","b":0,"title":""}}},
-	"leeds-footfall-A": {"start":"","c":[53.79792,-1.54704],"name":"LCC footfall counter A","desc":"Park Row","orientation":"","lanes":{"1":{"start":"2020-09-21","b":0,"title":""}}}
+	"leeds-footfall-10": {"start":"","c":[53.79792,-1.54704],"name":"LCC footfall counter 10","desc":"Park Row","orientation":"","lanes":{"1":{"start":"2020-09-21","b":0,"title":""}}}
 }	
