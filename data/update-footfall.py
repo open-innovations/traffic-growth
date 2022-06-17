@@ -19,11 +19,9 @@ resources.created = resources.created.str[:10]  #strip time section from datetim
 resources.created = pd.to_datetime(resources.created, format=ISO_DATE_FORMAT)
 
 for k,v in index.items():
-  idx = k[-1] # last character of key is the index number
-  if idx == '5' or idx == '8':  #counters 5 and 8 are no longer used so we'll skip those.
-    continue
+  fName = f"{k[6:]}-1.csv"
 
-  filename = path.join(data_dir, f'footfall-{idx}-1.csv')
+  filename = path.join(data_dir,fName)
   existing = pd.read_csv(filename)
   existing.Date = pd.to_datetime(existing.Date, format=ISO_DATE_FORMAT)
 
