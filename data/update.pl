@@ -35,6 +35,7 @@ msg("<green>Open Innovations cycle traffic data processor<none>\n");
 # Get the Leeds cycle growth package from Data Mill North
 push(@rtn,getPackage("https://datamillnorth.org/api/action/package_show?id=leeds-annual-cycle-growth-",{'dir'=>'leeds','prefix'=>'cycle','sites'=>{'id'=>'Site ID','description'=>'Description','title'=>'Site Name','latitude'=>'Latitude','longitude'=>'Longitude'},'rename'=>{'City Connect : Sites→Site ID'=>'Site ID'},'yearly'=>{'id'=>'Cosit','date'=>'Sdate','lane'=>'LaneNumber','count'=>'Volume','period'=>'Period'}}));
 
+
 # Get cycle counter data from York Open Data
 push(@rtn,getPackage("https://data.yorkopendata.org/api/3/action/package_show?id=automatic-cycle-counters",{'dir'=>'york','prefix'=>'cycle','sites'=>{'id'=>'SiteNumber','lane'=>'CountID','description'=>'Road','lanedesc'=>'ChannelDirection','title'=>'RoadName','latitude'=>'Northing','longitude'=>'Easting'},'yearly'=>{'id'=>'SiteRefNumber','lane'=>'CounterID','date'=>'Date','time'=>'TimePeriod','count'=>'PedalCycles'}}));
 
@@ -288,9 +289,9 @@ sub getPackage {
 	# Remove the metadata file
 	`rm $file`;
 
-
 	$json = JSON::XS->new->utf8->decode($str);
-	@resources = @{$json->{'result'}->{'resources'}};
+	@resources = @{$json->{'resources'}};
+
 	$n = @resources;
 	%years = ();
 	%datafiles = ();
