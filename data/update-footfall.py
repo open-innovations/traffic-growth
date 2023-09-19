@@ -14,7 +14,7 @@ with open(path.join(cwd, 'index-footfall.json'), 'r') as fp:
 response = requests.get('https://datamillnorth.org/api/action/package_show?id=leeds-city-centre-footfall-data')
 package = response.json()
 
-resources = pd.DataFrame(package['result']['resources'])
+resources = pd.DataFrame(package['resources'])
 resources.created = resources.created.str[:10]  #strip time section from datetime as we only need date
 resources.created = pd.to_datetime(resources.created, format=ISO_DATE_FORMAT)
 
