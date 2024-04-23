@@ -1,44 +1,42 @@
 #!/usr/bin/perl
 
+use utf8;
 use warnings;
+use strict;
+use Data::Dumper;
 use Geo::Coordinates::OSGB qw(ll_to_grid grid_to_ll);
 use JSON::XS;
-use Data::Dumper;
-use utf8;
 use Encode;
 binmode STDOUT, 'utf8';
 binmode STDERR, 'utf8';
+use Cwd qw(abs_path);
+my ($basedir, $path);
+BEGIN {
+	# Get the real base directory for this script
+	($basedir, $path) = abs_path($0) =~ m{(.*/)?([^/]+)$};
+}
+use lib $basedir;	# Custom functions
+require "lib.pl";
 
 
-my %colours = (
-	'black'=>"\033[0;30m",
-	'red'=>"\033[0;31m",
-	'green'=>"\033[0;32m",
-	'yellow'=>"\033[0;33m",
-	'blue'=>"\033[0;34m",
-	'magenta'=>"\033[0;35m",
-	'cyan'=>"\033[0;36m",
-	'white'=>"\033[0;37m",
-	'none'=>"\033[0m"
-);
-
-%sensors = ();
-%sitedata = ();
-%sensorjson = ();
-%sensorlane = ();
+my %sensors = ();
+my %sitedata = ();
+my %sensorjson = ();
+my %sensorlane = ();
 
 msg("<green>Open Innovations cycle traffic data processor<none>\n");
 
 
 # Get all the data files
 
+my ($f,%h,$i,$dir,$tmp,$prefix,$id,@cols,$line,@rtn,$c,$file,$h1,$h2,$date,$sensor,$period,$times,$t1,$t2,$hh,$datestamp,$p,$fh,$s,$lane,$index,%values,$d,@units,$h,$dt,@datetimes,%dts,$v,@lines,@dates);
+
 # Get the Leeds cycle growth package from Data Mill North
-push(@rtn,getPackage("https://datamillnorth.org/api/action/package_show?id=leeds-annual-cycle-growth-",{'dir'=>'leeds','prefix'=>'cycle','sites'=>{'id'=>'Site ID','description'=>'Description','title'=>'Site Name','latitude'=>'Latitude','longitude'=>'Longitude'},'rename'=>{'City Connect : Sites→Site ID'=>'Site ID'},'yearly'=>{'id'=>'Cosit','date'=>'Sdate','lane'=>'LaneNumber','count'=>'Volume','period'=>'Period'}}));
+push(@rtn,getPackage("https://datamillnorth.org/api/dataset/e1dmk",{'dir'=>'leeds','prefix'=>'cycle','sites'=>{'id'=>'Site ID','description'=>'Description','title'=>'Site Name','latitude'=>'Latitude','longitude'=>'Longitude'},'rename'=>{'City Connect : Sites→Site ID'=>'Site ID'},'yearly'=>{'id'=>'Cosit','date'=>'Sdate','lane'=>'LaneNumber','count'=>'Volume','period'=>'Period'}}));
 
 
 # Get cycle counter data from York Open Data
 push(@rtn,getPackage("https://data.yorkopendata.org/api/3/action/package_show?id=automatic-cycle-counters",{'dir'=>'york','prefix'=>'cycle','sites'=>{'id'=>'SiteNumber','lane'=>'CountID','description'=>'Road','lanedesc'=>'ChannelDirection','title'=>'RoadName','latitude'=>'Northing','longitude'=>'Easting'},'yearly'=>{'id'=>'SiteRefNumber','lane'=>'CounterID','date'=>'Date','time'=>'TimePeriod','count'=>'PedalCycles'}}));
-
 
 
 # Process all the data files
@@ -47,7 +45,7 @@ for($f = 0; $f < @rtn ; $f++){
 	$dir = $rtn[$f]{'dir'};
 	$tmp = $rtn[$f]{'tmp'};
 	$prefix = $rtn[$f]{'prefix'};
-	msg("\t$rtn[$f]{'prefix'} - <blue>$rtn[$f]{'file'}<none>\n");
+	msg("\t$rtn[$f]{'prefix'} - <cyan>$rtn[$f]{'file'}<none>\n");
 	open(CSV,$rtn[$f]{'file'});
 	%h = ();
 	$i = 0;
@@ -262,7 +260,8 @@ close(FILE);
 ########################
 
 sub getPackage {
-	local ($url,$tmp,$raw,$dir,$prefix,$str,$json,@resources,$n,$file,$y,@lines,@header,%h,@cols,$c,$i,$l,$sensor,$date,$id,$config,$key,$period,$lat,$lon,$times,$t1,$t2,$h1,$h2,@letters,%years,%datafiles);
+	my ($url,$tmp,$raw,$dir,$prefix,$str,$json,@resources,$n,$file,$y,@lines,%h,@cols,$c,$i,$l,$sensor,$date,$id,$config,$key,$period,$lat,$lon,$times,$t1,$t2,$h1,$h2,@letters,%years,%datafiles,@features,$lane);
+
 	$url = shift;
 	$config = shift;
 
@@ -279,18 +278,22 @@ sub getPackage {
 
 	$str = "";
 	$file = $dir."/raw/$prefix-data.json";
-	msg("Getting <cyan>$url<none> to <blue>$file<none>\n");
+	msg("Getting <cyan>$url<none> to <cyan>$file<none>\n");
 	`wget -q --no-check-certificate -O $file "$url"`;
 
-	open(FILE,$file);
-	@lines = <FILE>;
-	close(FILE);
-	$str = join("\n",@lines);
-	# Remove the metadata file
-	`rm $file`;
+	$json = LoadJSON($file);
 
-	$json = JSON::XS->new->utf8->decode($str);
-	@resources = @{$json->{'resources'}};
+	if($url =~ /datamillnorth/){
+		# DMN now provides a dict rather than an ordered array so we will now rebuild that
+		@resources = ();
+		foreach $id (sort{ $json->{'resources'}{$b}{'order'} <=> $json->{'resources'}{$a}{'order'} }(keys(%{$json->{'resources'}}))){
+			$json->{'resources'}{$id}{'id'} = $id;
+			$json->{'resources'}{$id}{'name'} = $json->{'resources'}{$id}{'title'};
+			push(@resources,$json->{'resources'}{$id});
+		}
+	}else{
+		@resources = @{$json->{'result'}{'resources'}};
+	}
 
 	$n = @resources;
 	%years = ();
@@ -403,7 +406,7 @@ sub getPackage {
 sub getCSV {
 	my $file = shift;
 	my $opt = shift;
-	my (@lines,$str,@rows,$r,@cols,@header,$c,$key,$data,$needed,$f,@features,@required);
+	my (@lines,$str,@rows,$r,@cols,@header,$c,$key,$data,$needed,$f,@features,@required,$k);
 	
 	open(FILE,"<:utf8",$file);
 	@lines = <FILE>;
@@ -474,24 +477,3 @@ sub getCSV {
 	return @features;
 }
 
-
-sub msg {
-	my $str = $_[0];
-	my $dest = $_[1]||STDOUT;
-	foreach my $c (keys(%colours)){ $str =~ s/\< ?$c ?\>/$colours{$c}/g; }
-	print $dest $str;
-}
-
-sub error {
-	my $str = $_[0];
-	$str =~ s/(^[\t\s]*)/$1<red>ERROR:<none> /;
-	foreach my $c (keys(%colours)){ $str =~ s/\< ?$c ?\>/$colours{$c}/g; }
-	msg($str,STDERR);
-}
-
-sub warning {
-	my $str = $_[0];
-	$str =~ s/(^[\t\s]*)/$1$colours{'yellow'}WARNING:$colours{'none'} /;
-	foreach my $c (keys(%colours)){ $str =~ s/\< ?$c ?\>/$colours{$c}/g; }
-	print STDERR $str;
-}
